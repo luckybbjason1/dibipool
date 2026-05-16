@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DIBI8coin 矿池 | 超现代化仪表盘</title>
+    <!-- 引入 Google 字体 -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #ffd700;
+            --primary-glow: rgba(255, 215, 0, 0.4);
+            --bg-dark: #050507;
+            --card-bg: rgba(255, 255, 255, 0.03);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --accent-green: #00ffaa;
+            --accent-blue: #00d4ff;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-dark);
+            color: #fff;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        /* 动态背景：深度参考 dibi8.com 的数字维度空间 */
+        .bg-animate {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -1;
+            background: radial-gradient(circle at center, #0a0a1a 0%, #050508 100%);
+            overflow: hidden;
+        }
+        
+        #bg-canvas {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+        }
+
+        .bg-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at center, transparent 0%, rgba(5, 5, 8, 0.4) 100%);
+            pointer-events: none;
+        }
+
+        .bg-grid {
+            position: absolute;
+            top: 0; left: 0; width: 200%; height: 200%;
+            background-image: 
+                linear-gradient(rgba(255,215,0,0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,215,0,0.03) 1px, transparent 1px);
+            background-size: 60px 60px;
+            transform: perspective(500px) rotateX(60deg) translateY(-20%) translateX(-25%);
+            animation: gridMove 20s linear infinite;
+            opacity: 0.5;
+        }
+
+        @keyframes gridMove {
+            0% { transform: perspective(500px) rotateX(60deg) translateY(-20%) translateX(-25%); }
+            100% { transform: perspective(500px) rotateX(60deg) translateY(0%) translateX(-25%); }
+        }
+
+        .glow-sphere {
+            position: absolute;
+            width: 600px; height: 600px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255, 215, 0, 0.08) 0%, transparent 70%);
+            filter: blur(80px);
+            pointer-events: none;
+            z-index: 0;
+            animation: floatGlow 15s ease-in-out infinite alternate;
+        }
+
+        @keyframes floatGlow {
+            0% { transform: translate(-10%, -10%); }
+            100% { transform: translate(20%, 30%); }
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        /* Header 设计 */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 60px;
+            animation: fadeInDown 1s ease-out;
+        }
+
+        .logo-area h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2.2rem;
+            letter-spacing: 2px;
+            background: linear-gradient(90deg, #fff, var(--primary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-transform: uppercase;
+        }
+
+        .logo-area p {
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 0.85rem;
+            margin-top: 5px;
+            letter-spacing: 1px;
+        }
+
+        .node-status {
+            background: var(--card-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--card-border);
+            padding: 10px 20px;
+            border-radius: 50px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 0.9rem;
+        }
+
+        /* 语言切换器 */
+        .lang-switcher {
+            display: flex;
+            gap: 10px;
+            margin-left: 20px;
+        }
+        .lang-btn {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--card-border);
+            color: rgba(255,255,255,0.6);
+            padding: 5px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: 0.3s;
+        }
+        .lang-btn.active {
+            background: var(--primary);
+            color: #000;
+            border-color: var(--primary);
+        }
+
+        .status-dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: var(--accent-green);
+            box-shadow: 0 0 10px var(--accent-green);
+            animation: pulse 2s infinite;
+        }
+
+        /* 统计卡片：玻璃拟态效果 */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 50px;
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(15px);
+            border: 1px solid var(--card-border);
+            padding: 30px;
+            border-radius: 24px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-10px);
+            border-color: rgba(255, 215, 0, 0.3);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 4px;
+            background: linear-gradient(90deg, transparent, var(--primary), transparent);
+            opacity: 0;
+            transition: 0.3s;
+        }
+
+        .stat-card:hover::before { opacity: 1; }
+
+        .stat-label {
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 15px;
+        }
+
+        .stat-value {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: baseline;
+            gap: 10px;
+        }
+
+        .stat-value span.unit {
+            font-size: 1rem;
+            color: var(--primary);
+            opacity: 0.8;
+        }
+
+        .stat-sub {
+            font-size: 0.85rem;
+            color: var(--accent-green);
+        }
+
+        /* 核心操作按钮 */
+        .hero-actions {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin: 60px 0;
+            animation: fadeInUp 1s ease-out 0.2s backwards;
+        }
+
+        .btn {
+            padding: 18px 45px;
+            border-radius: 16px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.1rem;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: #000;
+            box-shadow: 0 0 20px var(--primary-glow);
+        }
+
+        .btn-primary:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 35px var(--primary-glow);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--card-border);
+            color: #fff;
+        }
+
+        .btn-outline:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: #fff;
+        }
+
+        /* 列表部分 */
+        .content-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 30px;
+            animation: fadeInUp 1s ease-out 0.4s backwards;
+        }
+
+        .panel {
+            background: var(--card-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--card-border);
+            border-radius: 24px;
+            padding: 30px;
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .panel-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; padding: 15px; color: rgba(255,255,255,0.4); font-size: 0.8rem; text-transform: uppercase; }
+        td { padding: 18px 15px; border-top: 1px solid var(--card-border); }
+
+        .addr-tag {
+            font-family: monospace;
+            color: var(--accent-blue);
+            background: rgba(0, 212, 255, 0.1);
+            padding: 4px 10px;
+            border-radius: 6px;
+        }
+
+        .hash-value { color: var(--primary); font-weight: 600; }
+
+        /* PPLNS 科普面板 */
+        .pplns-panel {
+            background: linear-gradient(135deg, rgba(0,255,170,0.05) 0%, rgba(255,255,255,0.02) 100%);
+            border: 1px solid rgba(0, 255, 170, 0.15);
+            border-radius: 24px;
+            padding: 30px;
+            margin-top: 30px;
+        }
+        .pplns-badge {
+            background: var(--accent-green);
+            color: #000;
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            font-family: 'Orbitron', sans-serif;
+            display: inline-block;
+            margin-bottom: 15px;
+        }
+
+        .leaderboard-icon { font-size: 1.5rem; margin-right: 10px; }
+
+        /* 出块列表样式 */
+        .block-card {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            border-radius: 12px;
+            background: rgba(255,255,255,0.02);
+            margin-bottom: 12px;
+            border-left: 3px solid var(--primary);
+        }
+
+        .block-info h4 { font-family: 'Orbitron', sans-serif; font-size: 0.9rem; }
+        .block-info p { font-size: 0.75rem; color: rgba(255,255,255,0.4); margin-top: 3px; }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.5); opacity: 0.5; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 968px) {
+            .content-grid { grid-template-columns: 1fr; }
+            .stat-value { font-size: 2rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-animate">
+        <canvas id="bg-canvas"></canvas>
+        <div class="bg-grid"></div>
+        <div class="glow-sphere" style="top: -10%; left: -10%;"></div>
+        <div class="glow-sphere" style="bottom: -10%; right: -10%; animation-delay: -5s;"></div>
+        <div class="bg-overlay"></div>
+    </div>
+
+    <div class="container">
+        <header>
+            <div class="logo-area">
+                <h1>DIBI8 <span data-i18n="pool">Pool</span></h1>
+                <p data-i18n="tagline">The 8th Digital Dimension Mining Hub</p>
+            </div>
+            <div style="display: flex; align-items: center;">
+                <div class="node-status">
+                    <div class="status-dot"></div>
+                    <span data-i18n="status_active">NODE ALPHA ACTIVE</span>
+                </div>
+                <div class="lang-switcher">
+                    <button class="lang-btn" onclick="setLang('en')">EN</button>
+                    <button class="lang-btn" onclick="setLang('zh')">中</button>
+                    <button class="lang-btn" onclick="setLang('ko')">한</button>
+                    <button class="lang-btn" onclick="setLang('vi')">VN</button>
+                </div>
+            </div>
+        </header>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label" data-i18n="net_hashrate">Network Hashrate</div>
+                <div class="stat-value" id="totalHashrate">0 <span class="unit">MH/s</span></div>
+                <div class="stat-sub" data-i18n="hashrate_up">↑ Stable performance</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label" data-i18n="active_miners">Active Miners</div>
+                <div class="stat-value" id="minerCount">0 <span class="unit" data-i18n="unit_miners">Miners</span></div>
+                <div class="stat-sub" data-i18n="global_dist">Global distribution</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label" data-i18n="pool_blocks">Pool Blocks</div>
+                <div class="stat-value" id="blockHeight">0 <span class="unit" data-i18n="unit_blocks">Blocks</span></div>
+                <div class="stat-sub" data-i18n="luck">Luck: 100%</div>
+            </div>
+        </div>
+
+        <div class="hero-actions">
+            <a href="/modern-miner" class="btn btn-primary">
+                <span data-i18n="start_mining">⚡ START MINING NOW</span>
+            </a>
+            <a href="/modern-stratum" class="btn btn-outline">
+                <span data-i18n="stratum_mining">STRATUM MINING</span>
+            </a>
+            <a href="/modern-wallet" class="btn btn-outline">
+                <span data-i18n="wallet_gen">WALLET GEN</span>
+            </a>
+            <a href="https://dibi8.com/#whitepaper" class="btn btn-outline" target="_blank" data-i18n="whitepaper">
+                WHITEPAPER
+            </a>
+        </div>
+
+        <!-- 搜索与工具栏 -->
+        <div class="stats-grid" style="margin-bottom: 30px;">
+            <div class="panel" style="padding: 20px;">
+                <div class="panel-title" style="margin-bottom: 15px;">
+                    <span data-i18n="search_icon">🔍</span> <span data-i18n="check_stats">Check Your Stats</span>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" id="searchAddr" placeholder="Enter your wallet address..." data-i18n-placeholder="enter_address"
+                           style="flex: 1; background: rgba(0,0,0,0.3); border: 1px solid var(--card-border); padding: 12px; border-radius: 12px; color: #fff; font-family: monospace;">
+                    <button class="btn btn-primary" style="padding: 12px 25px; font-size: 0.9rem;" onclick="lookupStats()">
+                        <span data-i18n="search_btn">SEARCH</span>
+                    </button>
+                </div>
+                <div id="personalStats" style="display: none; margin-top: 20px; padding: 15px; background: rgba(255,215,0,0.05); border-radius: 12px; border: 1px dashed var(--primary);">
+                    <!-- 动态填充 -->
+                </div>
+            </div>
+
+            <div class="panel" style="padding: 20px;">
+                <div class="panel-title" style="margin-bottom: 15px;">
+                    <span data-i18n="calc_icon">🧮</span> <span data-i18n="profit_calc">Mining Calculator</span>
+                </div>
+                <div style="display: flex; gap: 15px; align-items: center;">
+                    <input type="number" id="calcHash" value="10" 
+                           style="width: 100px; background: rgba(0,0,0,0.3); border: 1px solid var(--card-border); padding: 12px; border-radius: 12px; color: #fff;">
+                    <span class="unit">MH/s</span>
+                    <span style="color: var(--accent-green); font-weight: 600;">≈ <span id="calcResult">1200</span> DIBI / Day</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- PPLNS 科普说明 -->
+        <div class="pplns-panel">
+            <div class="pplns-badge">PPLNS ENABLED</div>
+            <div class="panel-title" style="font-size: 1.2rem; margin-bottom: 15px;">
+                <span>🛡️</span> <span data-i18n="pplns_title">Fair Reward Distribution</span>
+            </div>
+            <p style="font-size: 0.9rem; color: rgba(255,255,255,0.7); line-height: 1.6;" data-i18n="pplns_desc">
+                We use the <strong>PPLNS (Pay Per Last N Shares)</strong> algorithm. Rewards are calculated based on your contribution to the last N shares before a block is found. This prevents "pool hopping" and ensures long-term loyal miners get the highest rewards.
+            </p>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-top: 20px;">
+                <div style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px; border: 1px solid var(--card-border);">
+                    <div style="font-size: 0.75rem; color: var(--primary);" data-i18n="pplns_window">PPLNS Window (N)</div>
+                    <div style="font-size: 1.2rem; font-family: 'Orbitron';">1,000 Shares</div>
+                </div>
+                <div style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px; border: 1px solid var(--card-border);">
+                    <div style="font-size: 0.75rem; color: var(--accent-green);" data-i18n="pool_fee">Pool Fee</div>
+                    <div style="font-size: 1.2rem; font-family: 'Orbitron';">1.0%</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="content-grid">
+            <div class="panel">
+                <div class="panel-header">
+                    <h2 class="panel-title"><span data-i18n="leaderboard_icon">🏆</span> <span data-i18n="leaderboard">Hashrate Leaderboard</span></h2>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th data-i18n="rank">Rank</th>
+                            <th data-i18n="address">Address</th>
+                            <th data-i18n="hashrate">Hashrate</th>
+                            <th data-i18n="blocks">Blocks</th>
+                        </tr>
+                    </thead>
+                    <tbody id="minersTable">
+                        <!-- 模拟数据 -->
+                        <tr>
+                            <td>1</td>
+                            <td><span class="addr-tag">dibi1q...4f1g</span></td>
+                            <td class="hash-value">12.5 MH/s</td>
+                            <td>428</td>
+                        </tr>
+                        <tr>
+                            <td>2</td>
+                            <td><span class="addr-tag">dibi1q...7k8l</span></td>
+                            <td class="hash-value">8.2 MH/s</td>
+                            <td>312</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header">
+                    <h2 class="panel-title"><span data-i18n="recent_icon">📦</span> <span data-i18n="recent_blocks">Recent Blocks</span></h2>
+                </div>
+                <div id="recentBlocks">
+                    <div class="block-card">
+                        <div class="block-info">
+                            <h4>#15,720</h4>
+                            <p><span data-i18n="found_by">Found by</span>: dibi1q...4f1g</p>
+                            <p data-i18n="just_now">2 minutes ago</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 连接信息 -->
+        <div class="panel" style="margin-top: 30px; background: linear-gradient(135deg, rgba(255,215,0,0.05) 0%, rgba(255,255,255,0.03) 100%);">
+            <div class="panel-header">
+                <h2 class="panel-title"><span>🔗</span> <span data-i18n="connection_info">Connection Information</span></h2>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+                <div>
+                    <div class="stat-label" data-i18n="stratum_url">Stratum URL</div>
+                    <div class="addr-tag" style="font-size: 1.1rem; padding: 10px; display: block; text-align: center;">stratum+tcp://pool.dibi8.com</div>
+                </div>
+                <div>
+                    <div class="stat-label" data-i18n="stratum_port">Port</div>
+                    <div class="addr-tag" style="font-size: 1.1rem; padding: 10px; display: block; text-align: center;">4444 / 5555</div>
+                </div>
+            </div>
+        </div>
+
+        <footer style="margin-top: 80px; padding: 40px 0; border-top: 1px solid var(--card-border); text-align: center; color: rgba(255,255,255,0.3); font-size: 0.9rem;">
+            <p data-i18n="footer">DIBI8 Pool | The 8th Dimension Financial Network</p>
+            <div style="margin-top: 15px; display: flex; justify-content: center; gap: 20px;">
+                <a href="#" style="color: inherit; text-decoration: none;">GitHub</a>
+                <a href="#" style="color: inherit; text-decoration: none;">Telegram</a>
+                <a href="#" style="color: inherit; text-decoration: none;">Twitter</a>
+            </div>
+        </footer>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        // 数字维度背景粒子系统
+        const canvas = document.getElementById('bg-canvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+
+        function initCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+
+        class Particle {
+            constructor() {
+                this.reset();
+            }
+            reset() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.size = Math.random() * 1.5 + 0.5;
+                this.vx = (Math.random() - 0.5) * 0.5;
+                this.vy = (Math.random() - 0.5) * 0.5;
+                this.color = `rgba(255, 215, 0, ${Math.random() * 0.5 + 0.2})`;
+            }
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+
+                if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
+                if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
+            }
+            draw() {
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function createParticles() {
+            particles = [];
+            const count = Math.floor(window.innerWidth / 15);
+            for (let i = 0; i < count; i++) particles.push(new Particle());
+        }
+
+        function drawLines() {
+            for (let i = 0; i < particles.length; i++) {
+                for (let j = i + 1; j < particles.length; j++) {
+                    const dx = particles[i].x - particles[j].x;
+                    const dy = particles[i].y - particles[j].y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+
+                    if (dist < 150) {
+                        ctx.strokeStyle = `rgba(255, 215, 0, ${0.15 * (1 - dist / 150)})`;
+                        ctx.lineWidth = 0.5;
+                        ctx.beginPath();
+                        ctx.moveTo(particles[i].x, particles[i].y);
+                        ctx.lineTo(particles[j].x, particles[j].y);
+                        ctx.stroke();
+                    }
+                }
+            }
+        }
+
+        function animate() {
+            if (document.hidden) {
+                requestAnimationFrame(animate);
+                return;
+            }
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach(p => {
+                p.update();
+                p.draw();
+            });
+            drawLines();
+            requestAnimationFrame(animate);
+        }
+
+        window.addEventListener('resize', () => {
+            initCanvas();
+            createParticles();
+        });
+
+        initCanvas();
+        createParticles();
+        animate();
+
+        const socket = io();
+
+        // 多语言配置
+        const i18n = {
+            en: {
+                pool: "Pool",
+                tagline: "The 8th Digital Dimension Mining Hub",
+                status_active: "NODE ALPHA ACTIVE",
+                net_hashrate: "Network Hashrate",
+                hashrate_up: "↑ Stable performance",
+                active_miners: "Active Miners",
+                unit_miners: "Miners",
+                global_dist: "Global distribution",
+                pool_blocks: "Pool Blocks",
+                unit_blocks: "Blocks",
+                luck: "Luck: 100%",
+                start_mining: "⚡ START MINING NOW",
+                stratum_mining: "STRATUM MINING",
+                wallet_gen: "WALLET GEN",
+                whitepaper: "WHITEPAPER",
+                leaderboard: "Hashrate Leaderboard",
+                leaderboard_icon: "🏆",
+                rank: "Rank",
+                address: "Address",
+                hashrate: "Hashrate",
+                blocks: "Blocks",
+                recent_blocks: "Recent Blocks",
+                recent_icon: "📦",
+                found_by: "Found by",
+                just_now: "Just now",
+                check_stats: "Check Your Stats",
+                search_btn: "SEARCH",
+                profit_calc: "Mining Calculator",
+                day: "Day",
+                connection_info: "Connection Information",
+                stratum_url: "Stratum URL",
+                stratum_port: "Port",
+                pplns_title: "Fair Reward Distribution",
+                pplns_desc: "We use the PPLNS (Pay Per Last N Shares) algorithm. Rewards are calculated based on your contribution to the last N shares before a block is found. This prevents 'pool hopping' and ensures long-term loyal miners get the highest rewards.",
+                pplns_window: "PPLNS Window (N)",
+                pool_fee: "Pool Fee",
+                footer: "DIBI8 Pool | The 8th Dimension Financial Network"
+            },
+            zh: {
+                pool: "矿池",
+                tagline: "第八数字维度挖矿枢纽",
+                status_active: "ALPHA 节点运行中",
+                net_hashrate: "全网算力",
+                hashrate_up: "↑ 算力表现稳定",
+                active_miners: "活跃矿工",
+                unit_miners: "人",
+                global_dist: "全球分布式节点",
+                pool_blocks: "矿池出块",
+                unit_blocks: "块",
+                luck: "幸运值: 100%",
+                start_mining: "⚡ 立即开始挖矿",
+                stratum_mining: "STRATUM 挖矿",
+                wallet_gen: "在线钱包",
+                whitepaper: "白皮书",
+                leaderboard: "算力排行榜",
+                leaderboard_icon: "🏆",
+                rank: "排名",
+                address: "钱包地址",
+                hashrate: "算力",
+                blocks: "出块数",
+                recent_blocks: "最近出块",
+                recent_icon: "📦",
+                found_by: "发现者",
+                just_now: "刚刚",
+                check_stats: "查询个人统计",
+                search_btn: "查询",
+                profit_calc: "收益计算器",
+                day: "天",
+                connection_info: "连接信息",
+                stratum_url: "Stratum 地址",
+                stratum_port: "端口",
+                pplns_title: "公平收益分配机制",
+                pplns_desc: "我们采用 PPLNS (Pay Per Last N Shares) 算法。收益是根据您在发现区块前的最后 N 个份额贡献来计算的。这可以有效防止“投机矿工”频繁切换矿池，确保长期忠诚的矿工获得最高收益。",
+                pplns_window: "PPLNS 结算窗口 (N)",
+                pool_fee: "矿池手续费",
+                footer: "DIBI8 矿池 | 第八维度金融网络"
+            },
+            ko: {
+                pool: "마이닝 풀",
+                tagline: "제8 디지털 차원 마이닝 허브",
+                status_active: "알파 노드 활성화됨",
+                net_hashrate: "네트워크 해시레이트",
+                hashrate_up: "↑ 안정적인 성능",
+                active_miners: "활성 광부",
+                unit_miners: "명",
+                global_dist: "글로벌 분산",
+                pool_blocks: "풀 블록",
+                unit_blocks: "블록",
+                luck: "운: 100%",
+                start_mining: "⚡ 지금 마이닝 시작",
+                stratum_mining: "STRATUM 마이닝",
+                wallet_gen: "지갑 생성",
+                whitepaper: "백서",
+                leaderboard: "해시레이트 순위",
+                leaderboard_icon: "🏆",
+                rank: "순위",
+                address: "지갑 주소",
+                hashrate: "해시레이트",
+                blocks: "블록 수",
+                recent_blocks: "최근 블록",
+                recent_icon: "📦",
+                found_by: "발견자",
+                just_now: "방금 전",
+                check_stats: "내 통계 확인",
+                search_btn: "검색",
+                profit_calc: "수익 계산기",
+                day: "일",
+                connection_info: "연결 정보",
+                stratum_url: "Stratum URL",
+                stratum_port: "포트",
+                pplns_title: "공정한 보상 분배",
+                pplns_desc: "우리는 PPLNS(Pay Per Last N Shares) 알고리즘을 사용합니다. 보상은 블록을 찾기 전 마지막 N개의 쉐어에 대한 기여도를 기준으로 계산됩니다. 이는 '풀 호핑'을 방지하고 장기 충성도가 높은 채굴자가 최고의 보상을 받을 수 있도록 보장합니다.",
+                pplns_window: "PPLNS 정산 창 (N)",
+                pool_fee: "풀 수수료",
+                footer: "DIBI8 풀 | 제8차원 금융 네트워크"
+            },
+            vi: {
+                pool: "Bể đào",
+                tagline: "Trung tâm khai thác kỹ thuật số chiều thứ 8",
+                status_active: "NÚT ALPHA ĐANG HOẠT ĐỘNG",
+                net_hashrate: "Tốc độ băm mạng",
+                hashrate_up: "↑ Hiệu suất ổn định",
+                active_miners: "Thợ đào đang hoạt động",
+                unit_miners: "Thợ đào",
+                global_dist: "Phân phối toàn cầu",
+                pool_blocks: "Khối của bể",
+                unit_blocks: "Khối",
+                luck: "May mắn: 100%",
+                start_mining: "⚡ BẮT ĐẦU ĐÀO NGAY",
+                stratum_mining: "KHAI THÁC STRATUM",
+                wallet_gen: "TẠO VÍ",
+                whitepaper: "SÁCH TRẮNG",
+                leaderboard: "Bảng xếp hạng tốc độ băm",
+                leaderboard_icon: "🏆",
+                rank: "Hạng",
+                address: "Địa chỉ",
+                hashrate: "Tốc độ băm",
+                blocks: "Khối",
+                recent_blocks: "Khối gần đây",
+                recent_icon: "📦",
+                found_by: "Tìm thấy bởi",
+                just_now: "Vừa xong",
+                check_stats: "Kiểm tra thống kê",
+                search_btn: "TÌM KIẾM",
+                profit_calc: "Máy tính lợi nhuận",
+                day: "Ngày",
+                connection_info: "Thông tin kết nối",
+                stratum_url: "URL Stratum",
+                stratum_port: "Cổng",
+                pplns_title: "Phân phối phần thưởng công bằng",
+                pplns_desc: "Chúng tôi sử dụng thuật toán PPLNS (Pay Per Last N Shares). Phần thưởng được tính dựa trên đóng góp của bạn cho N cổ phần cuối cùng trước khi tìm thấy một khối. Điều này ngăn chặn việc 'nhảy bể' và đảm bảo những thợ đào trung thành lâu dài nhận được phần thưởng cao nhất.",
+                pplns_window: "Cửa sổ PPLNS (N)",
+                pool_fee: "Phí bể đào",
+                footer: "DIBI8 Pool | Mạng lưới tài chính chiều thứ 8"
+            }
+        };
+
+        let currentLang = localStorage.getItem('dibi8_lang') || 'en';
+
+        function setLang(lang) {
+            currentLang = lang;
+            localStorage.setItem('dibi8_lang', lang);
+            updateUI();
+        }
+
+        function updateUI() {
+            // 更新所有带 data-i18n 的元素
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (i18n[currentLang][key]) {
+                    el.innerText = i18n[currentLang][key];
+                }
+            });
+            // 更新 placeholder
+            document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+                const key = el.getAttribute('data-i18n-placeholder');
+                if (i18n[currentLang][key]) {
+                    el.placeholder = i18n[currentLang][key];
+                }
+            });
+            // 更新按钮状态
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.innerText.toLowerCase().includes(currentLang === 'zh' ? '中' : currentLang === 'ko' ? '한' : currentLang === 'vi' ? 'vn' : 'en'));
+            });
+        }
+
+        // 初始化语言
+        updateUI();
+
+        // 搜索与计算器逻辑
+        function lookupStats() {
+            const addr = document.getElementById('searchAddr').value.trim();
+            const personalDiv = document.getElementById('personalStats');
+            if (!addr) return;
+
+            // 模拟查询动效
+            personalDiv.style.display = 'block';
+            personalDiv.innerHTML = `<div style="text-align:center; padding: 10px; color: var(--primary); font-size: 0.8rem;">Querying Blockchain Node...</div>`;
+            
+            setTimeout(() => {
+                const isTestWallet = addr === "0xf147b4cd78a27edc7df78cd9fe98ac62774717b6";
+                personalDiv.innerHTML = `
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <div><small>Hashrate:</small> <br><strong>${isTestWallet ? '4.85' : '0.00'} MH/s</strong></div>
+                        <div><small>Blocks:</small> <br><strong>${isTestWallet ? '156' : '0'}</strong></div>
+                        <div style="grid-column: span 2; margin-top: 10px; font-size: 0.8rem; color: var(--primary);">
+                            Status: ${isTestWallet ? 'Active (3 Workers)' : 'Inactive'}
+                        </div>
+                    </div>
+                `;
+            }, 800);
+        }
+
+        const calcInput = document.getElementById('calcHash');
+        const calcResult = document.getElementById('calcResult');
+        calcInput.addEventListener('input', () => {
+            const hash = parseFloat(calcInput.value) || 0;
+            calcResult.innerText = (hash * 120).toFixed(0); // 模拟每 MH/s 收益 120 DIBI
+        });
+
+        // 订阅实时统计
+        socket.emit('subscribe_stats');
+
+        socket.on('stats_update', (data) => {
+            // 更新统计
+            const unitMiners = i18n[currentLang].unit_miners || "Miners";
+            const unitBlocks = i18n[currentLang].unit_blocks || "Blocks";
+            
+            document.getElementById('totalHashrate').innerHTML = `${data.totalHashrate || 0} <span class="unit">MH/s</span>`;
+            document.getElementById('minerCount').innerHTML = `${data.minerCount || 0} <span class="unit">${unitMiners}</span>`;
+            document.getElementById('blockHeight').innerHTML = `${data.blockHeight || 0} <span class="unit">${unitBlocks}</span>`;
+            
+            // 更新排行榜
+            const tbody = document.getElementById('minersTable');
+            tbody.innerHTML = '';
+            (data.topMiners || []).forEach((miner, i) => {
+                const row = `
+                    <tr>
+                        <td>${i + 1}</td>
+                        <td><span class="addr-tag">${miner.address}</span></td>
+                        <td class="hash-value">${miner.hashrate} MH/s</td>
+                        <td>${miner.totalBlocks}</td>
+                    </tr>
+                `;
+                tbody.innerHTML += row;
+            });
+        });
+
+        socket.on('new_block', (block) => {
+            const blocksDiv = document.getElementById('recentBlocks');
+            const foundByStr = i18n[currentLang].found_by || "Found by";
+            const justNowStr = i18n[currentLang].just_now || "Just now";
+            const blockCard = `
+                <div class="block-card" style="animation: fadeInUp 0.5s ease-out;">
+                    <div class="block-info">
+                        <h4>#${block.height}</h4>
+                        <p>${foundByStr}: ${block.miner.substring(0, 12)}...</p>
+                        <p>${justNowStr}</p>
+                    </div>
+                </div>
+            `;
+            blocksDiv.insertAdjacentHTML('afterbegin', blockCard);
+            if (blocksDiv.children.length > 5) blocksDiv.lastElementChild.remove();
+        });
+
+        console.log("DIBI8 Pool Modern UI (Real-time) Initialized");
+    </script>
+</body>
+</html>

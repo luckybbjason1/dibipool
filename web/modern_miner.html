@@ -1,0 +1,1064 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DIBI8coin 挖矿 | 极速浏览器挖矿</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@300;400;600&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary: #ffd700;
+            --primary-glow: rgba(255, 215, 0, 0.4);
+            --bg-dark: #050507;
+            --card-bg: rgba(255, 255, 255, 0.03);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --accent-green: #00ffaa;
+            --accent-red: #ff4757;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-dark);
+            color: #fff;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* 动态背景：深度参考 dibi8.com 的数字维度空间 */
+        .bg-animate {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -1;
+            background: radial-gradient(circle at center, #0a0a1a 0%, #050508 100%);
+            overflow: hidden;
+        }
+        
+        #bg-canvas {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+        }
+
+        .bg-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at center, transparent 0%, rgba(5, 5, 8, 0.4) 100%);
+            pointer-events: none;
+        }
+
+        .bg-grid {
+            position: absolute;
+            top: 0; left: 0; width: 200%; height: 200%;
+            background-image: 
+                linear-gradient(rgba(255,215,0,0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,215,0,0.03) 1px, transparent 1px);
+            background-size: 60px 60px;
+            transform: perspective(500px) rotateX(60deg) translateY(-20%) translateX(-25%);
+            animation: gridMove 20s linear infinite;
+            opacity: 0.5;
+        }
+
+        @keyframes gridMove {
+            0% { transform: perspective(500px) rotateX(60deg) translateY(-20%) translateX(-25%); }
+            100% { transform: perspective(500px) rotateX(60deg) translateY(0%) translateX(-25%); }
+        }
+
+        .glow-sphere {
+            position: absolute;
+            width: 600px; height: 600px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255, 215, 0, 0.08) 0%, transparent 70%);
+            filter: blur(80px);
+            pointer-events: none;
+            z-index: 0;
+            animation: floatGlow 15s ease-in-out infinite alternate;
+        }
+
+        @keyframes floatGlow {
+            0% { transform: translate(-10%, -10%); }
+            100% { transform: translate(20%, 30%); }
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .back-link {
+            color: rgba(255, 255, 255, 0.4);
+            text-decoration: none;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 20px;
+            transition: 0.3s;
+        }
+
+        .back-link:hover { color: var(--primary); }
+
+        h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2rem;
+            background: linear-gradient(90deg, #fff, var(--primary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        /* 核心挖掘区域 */
+        .miner-core {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 25px;
+        }
+
+        .panel {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--card-border);
+            border-radius: 24px;
+            padding: 30px;
+            transition: 0.3s;
+        }
+
+        .panel:hover { border-color: rgba(255, 255, 255, 0.15); }
+
+        /* 语言切换器 */
+        .lang-switcher {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        .lang-btn {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--card-border);
+            color: rgba(255,255,255,0.6);
+            padding: 5px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: 0.3s;
+        }
+        .lang-btn.active {
+            background: var(--primary);
+            color: #000;
+            border-color: var(--primary);
+        }
+
+        .panel-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1rem;
+            color: var(--primary);
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            letter-spacing: 1px;
+        }
+
+        /* 输入框样式 */
+        .input-group { margin-bottom: 20px; }
+        .input-group label {
+            display: block;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.4);
+            margin-bottom: 10px;
+            letter-spacing: 1px;
+        }
+        .input-group input {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 15px;
+            color: #fff;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.95rem;
+            transition: 0.3s;
+        }
+        .input-group input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.1);
+        }
+
+        /* 挖掘视觉 */
+        .mining-visual {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 0;
+            position: relative;
+        }
+
+        .mining-orb {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: radial-gradient(circle, var(--primary) 0%, transparent 70%);
+            opacity: 0.2;
+            position: absolute;
+            filter: blur(20px);
+            transition: 0.5s;
+        }
+
+        .mining-orb.active {
+            opacity: 0.5;
+            animation: orbPulse 2s infinite;
+        }
+
+        .mining-icon {
+            font-size: 4rem;
+            z-index: 1;
+            filter: drop-shadow(0 0 15px var(--primary-glow));
+        }
+
+        .mining-icon.active {
+            animation: rotateGear 4s linear infinite;
+        }
+
+        .live-hashrate {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 3.5rem;
+            font-weight: 700;
+            margin: 25px 0 10px;
+            background: linear-gradient(180deg, #fff, var(--accent-green));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .unit { font-size: 1.2rem; color: var(--accent-green); }
+
+        /* 状态行 */
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .status-item {
+            background: rgba(255,255,255,0.02);
+            padding: 20px;
+            border-radius: 16px;
+            text-align: center;
+        }
+
+        .status-label { font-size: 0.7rem; color: rgba(255,255,255,0.4); text-transform: uppercase; margin-bottom: 8px; }
+        .status-val { font-family: 'Orbitron', sans-serif; font-size: 1.1rem; color: var(--primary); }
+
+        /* 按钮 */
+        .actions {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 18px;
+            border-radius: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.3s;
+            border: none;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.9rem;
+            letter-spacing: 1px;
+        }
+
+        .btn-start {
+            background: var(--primary);
+            color: #000;
+            box-shadow: 0 0 15px var(--primary-glow);
+        }
+
+        .btn-start:hover:not(:disabled) { transform: translateY(-3px); box-shadow: 0 0 25px var(--primary-glow); }
+
+        .btn-stop {
+            background: transparent;
+            border: 1px solid var(--accent-red);
+            color: var(--accent-red);
+        }
+
+        .btn-stop:hover:not(:disabled) { background: rgba(255, 71, 87, 0.1); }
+
+        .btn:disabled { opacity: 0.3; cursor: not-allowed; filter: grayscale(1); }
+
+        .power-row {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .power-meter {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+            justify-content: flex-end;
+            font-family: 'Orbitron', sans-serif;
+            color: rgba(255,255,255,0.7);
+        }
+
+        .power-meter strong {
+            color: var(--primary);
+            font-size: 1.1rem;
+        }
+
+        .slider {
+            width: 100%;
+            accent-color: var(--primary);
+        }
+
+        .mini-btn {
+            padding: 10px 12px;
+            border-radius: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.3s;
+            border: 1px solid var(--card-border);
+            background: rgba(255,255,255,0.05);
+            color: rgba(255,255,255,0.75);
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.75rem;
+            letter-spacing: 0.6px;
+            white-space: nowrap;
+        }
+
+        .mini-btn:hover:not(:disabled) {
+            border-color: rgba(255,255,255,0.2);
+            transform: translateY(-1px);
+        }
+
+        .modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(6px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            z-index: 9999;
+        }
+
+        .modal.hidden { display: none; }
+
+        .modal-card {
+            max-width: 620px;
+            width: 100%;
+        }
+
+        .modal-text {
+            color: rgba(255,255,255,0.7);
+            line-height: 1.7;
+            font-size: 0.95rem;
+            margin-top: -10px;
+            margin-bottom: 18px;
+        }
+
+        .modal-check {
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+            font-size: 0.9rem;
+            color: rgba(255,255,255,0.8);
+            margin: 10px 0 20px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .modal-check input { margin-top: 3px; }
+
+        /* 日志 */
+        .log-container {
+            margin-top: 25px;
+        }
+
+        .log-box {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 20px;
+            height: 180px;
+            overflow-y: auto;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.8rem;
+            line-height: 1.6;
+        }
+
+        .log-entry { margin-bottom: 6px; display: flex; gap: 10px; }
+        .log-time { color: rgba(255,255,255,0.2); }
+        .log-success { color: var(--accent-green); }
+        .log-error { color: var(--accent-red); }
+        .log-info { color: rgba(255,255,255,0.5); }
+
+        @keyframes rotateGear {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes orbPulse {
+            0% { transform: scale(1); opacity: 0.2; }
+            50% { transform: scale(1.4); opacity: 0.4; }
+            100% { transform: scale(1); opacity: 0.2; }
+        }
+
+        /* 隐藏滚动条 */
+        .log-box::-webkit-scrollbar { width: 4px; }
+        .log-box::-webkit-scrollbar-thumb { background: var(--card-border); border-radius: 10px; }
+    </style>
+</head>
+<body>
+    <div class="bg-animate">
+        <canvas id="bg-canvas"></canvas>
+        <div class="bg-grid"></div>
+        <div class="glow-sphere" style="top: -10%; left: -10%;"></div>
+        <div class="glow-sphere" style="bottom: -10%; right: -10%; animation-delay: -5s;"></div>
+        <div class="bg-overlay"></div>
+    </div>
+    <div class="container">
+        <header>
+            <div class="lang-switcher">
+                <button class="lang-btn" onclick="setLang('en')">EN</button>
+                <button class="lang-btn" onclick="setLang('zh')">中</button>
+                <button class="lang-btn" onclick="setLang('ko')">한</button>
+                <button class="lang-btn" onclick="setLang('vi')">VN</button>
+            </div>
+            <a href="/modern" class="back-link" data-i18n="back_to_dashboard">← BACK TO DASHBOARD</a>
+            <h1>MINING <span data-i18n="center">CENTER</span></h1>
+        </header>
+
+        <div class="miner-core">
+            <div class="panel">
+                <div class="panel-title"><span data-i18n="config_icon">⚙️</span> <span data-i18n="configuration">CONFIGURATION</span></div>
+                <div class="input-group">
+                    <label data-i18n="wallet_address">Wallet Address</label>
+                    <input type="text" id="walletAddress" value="0xf147b4cd78a27edc7df78cd9fe98ac62774717b6" placeholder="Enter DIBI8 address..." spellcheck="false" data-i18n-placeholder="enter_address">
+                </div>
+                <div class="input-group">
+                    <label data-i18n="worker_id">Worker ID</label>
+                    <input type="text" id="workerName" value="browser_node_01" spellcheck="false">
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-title" style="display: flex; justify-content: space-between; align-items: center;">
+                    <div><span data-i18n="perf_icon">⚡</span> <span data-i18n="live_perf">LIVE PERFORMANCE</span></div>
+                    <div style="font-size: 0.7rem; display: flex; gap: 10px;">
+                        <label style="display: flex; align-items: center; gap: 5px; cursor: pointer;">
+                            <input type="checkbox" id="notifyToggle"> 🔔 <span data-i18n="notify">Alerts</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="input-group" style="margin-top: 20px;">
+                    <label data-i18n="power_limit">Mining Power Limit</label>
+                    <div class="power-row">
+                        <div>
+                            <input class="slider" type="range" id="powerSlider" min="1" max="80" value="60">
+                            <div class="power-meter">
+                                <span data-i18n="power_current">Current</span>
+                                <strong id="powerValue">60%</strong>
+                                <span id="powerCapHint" style="color: rgba(255,255,255,0.45);"></span>
+                            </div>
+                        </div>
+                        <button class="mini-btn" id="unlockBtn" type="button" onclick="openConsentModal()" data-i18n="unlock_100">UNLOCK 100%</button>
+                    </div>
+                </div>
+                
+                <!-- 算力图表 -->
+                <div style="height: 200px; margin-bottom: 20px;">
+                    <canvas id="hashrateChart"></canvas>
+                </div>
+
+                <div class="mining-visual">
+                    <div class="mining-orb" id="miningOrb"></div>
+                    <div class="mining-icon" id="miningIcon">⚙️</div>
+                    <div class="live-hashrate"><span id="hashrate">0.00</span> <span class="unit">H/min</span></div>
+                </div>
+
+                <div class="status-grid">
+                    <div class="status-item">
+                        <div class="status-label" data-i18n="blocks_mined">Blocks Mined</div>
+                        <div class="status-val" id="minedBlocks">0</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-label" data-i18n="total_reward">Total Reward</div>
+                        <div class="status-val" id="earnings">0 DIBI</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-label" data-i18n="uptime">Uptime</div>
+                        <div class="status-val" id="runtime">00:00</div>
+                    </div>
+                </div>
+
+                <div class="actions">
+                    <button class="btn btn-start" id="btnStart" onclick="startMining()" data-i18n="init_mining">INITIALIZE MINING</button>
+                    <button class="btn btn-stop" id="btnStop" onclick="stopMining()" disabled data-i18n="terminate">TERMINATE</button>
+                </div>
+
+                <div class="log-container">
+                    <div class="panel-title" style="margin-bottom: 15px; font-size: 0.8rem;"><span data-i18n="log_icon">📝</span> <span data-i18n="system_logs">SYSTEM LOGS</span></div>
+                    <div class="log-box" id="logBox">
+                        <div class="log-entry log-info">
+                            <span class="log-time">[00:00:00]</span>
+                            <span data-i18n="sys_ready">System ready. Waiting for user initialization...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal hidden" id="consentModal" role="dialog" aria-modal="true">
+        <div class="panel modal-card">
+            <div class="panel-title"><span>🛡️</span> <span data-i18n="consent_title">HIGH POWER CONSENT</span></div>
+            <div class="modal-text" data-i18n="consent_desc">To protect users, mining power is capped at 80% by default. Unlocking 100% may increase CPU usage, heat, fan noise, and battery drain. Proceed only if you understand and agree.</div>
+            <label class="modal-check">
+                <input type="checkbox" id="consentCheck">
+                <span data-i18n="consent_check">I understand and agree to unlock 100% mining power on this device.</span>
+            </label>
+            <div class="actions" style="margin-top: 0;">
+                <button class="btn btn-stop" type="button" onclick="cancelConsent()" data-i18n="consent_cancel">CANCEL</button>
+                <button class="btn btn-start" id="consentAgree" type="button" onclick="acceptConsent()" disabled data-i18n="consent_agree">AGREE & UNLOCK</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        // 数字维度背景粒子系统
+        const canvasBg = document.getElementById('bg-canvas');
+        const ctxBg = canvasBg.getContext('2d');
+        let bgParticles = [];
+
+        function initBgCanvas() {
+            canvasBg.width = window.innerWidth;
+            canvasBg.height = window.innerHeight;
+        }
+
+        class BgParticle {
+            constructor() {
+                this.reset();
+            }
+            reset() {
+                this.x = Math.random() * canvasBg.width;
+                this.y = Math.random() * canvasBg.height;
+                this.size = Math.random() * 1.5 + 0.5;
+                this.vx = (Math.random() - 0.5) * 0.5;
+                this.vy = (Math.random() - 0.5) * 0.5;
+                this.color = `rgba(255, 215, 0, ${Math.random() * 0.5 + 0.2})`;
+            }
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+
+                if (this.x < 0 || this.x > canvasBg.width) this.vx *= -1;
+                if (this.y < 0 || this.y > canvasBg.height) this.vy *= -1;
+            }
+            draw() {
+                ctxBg.fillStyle = this.color;
+                ctxBg.beginPath();
+                ctxBg.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctxBg.fill();
+            }
+        }
+
+        function createBgParticles() {
+            bgParticles = [];
+            const count = Math.floor(window.innerWidth / 15);
+            for (let i = 0; i < count; i++) bgParticles.push(new BgParticle());
+        }
+
+        function drawBgLines() {
+            for (let i = 0; i < bgParticles.length; i++) {
+                for (let j = i + 1; j < bgParticles.length; j++) {
+                    const dx = bgParticles[i].x - bgParticles[j].x;
+                    const dy = bgParticles[i].y - bgParticles[j].y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+
+                    if (dist < 150) {
+                        ctxBg.strokeStyle = `rgba(255, 215, 0, ${0.15 * (1 - dist / 150)})`;
+                        ctxBg.lineWidth = 0.5;
+                        ctxBg.beginPath();
+                        ctxBg.moveTo(bgParticles[i].x, bgParticles[i].y);
+                        ctxBg.lineTo(bgParticles[j].x, bgParticles[j].y);
+                        ctxBg.stroke();
+                    }
+                }
+            }
+        }
+
+        function animateBg() {
+            if (document.hidden) {
+                requestAnimationFrame(animateBg);
+                return;
+            }
+            ctxBg.clearRect(0, 0, canvasBg.width, canvasBg.height);
+            bgParticles.forEach(p => {
+                p.update();
+                p.draw();
+            });
+            drawBgLines();
+            requestAnimationFrame(animateBg);
+        }
+
+        window.addEventListener('resize', () => {
+            initBgCanvas();
+            createBgParticles();
+        });
+
+        initBgCanvas();
+        createBgParticles();
+        animateBg();
+
+        const socket = io();
+        let mining = false;
+        let startTime = null;
+        let minedBlocks = 0;
+        let runtimeInterval = null;
+        let currentJob = null;
+
+        // 图表初始化
+        const ctx = document.getElementById('hashrateChart').getContext('2d');
+        const hashrateChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Hashrate (H/min)',
+                    data: [],
+                    borderColor: '#ffd700',
+                    backgroundColor: 'rgba(255, 215, 0, 0.1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { display: false },
+                    y: { 
+                        beginAtZero: true,
+                        grid: { color: 'rgba(255,255,255,0.05)' },
+                        ticks: { color: 'rgba(255,255,255,0.3)', font: { size: 10 } }
+                    }
+                }
+            }
+        });
+
+        function updateChart(val) {
+            const now = new Date().toLocaleTimeString();
+            hashrateChart.data.labels.push(now);
+            hashrateChart.data.datasets[0].data.push(val);
+            if (hashrateChart.data.labels.length > 30) {
+                hashrateChart.data.labels.shift();
+                hashrateChart.data.datasets[0].data.shift();
+            }
+            hashrateChart.update('none');
+        }
+
+        // 多语言配置
+        const i18n = {
+            en: {
+                back_to_dashboard: "← BACK TO DASHBOARD",
+                center: "CENTER",
+                config_icon: "⚙️",
+                configuration: "CONFIGURATION",
+                wallet_address: "Wallet Address",
+                enter_address: "Enter DIBI8 address...",
+                worker_id: "Worker ID",
+                perf_icon: "⚡",
+                live_perf: "LIVE PERFORMANCE",
+                blocks_mined: "Blocks Mined",
+                total_reward: "Total Reward",
+                uptime: "Uptime",
+                init_mining: "INITIALIZE MINING",
+                terminate: "TERMINATE",
+                log_icon: "📝",
+                system_logs: "SYSTEM LOGS",
+                sys_ready: "System ready. Waiting for user initialization...",
+                err_no_address: "ERROR: Wallet address is mandatory.",
+                initializing: "INITIALIZING: Authenticating",
+                new_job: "NEW JOB: Received task header",
+                success_block: "SUCCESS: Block found and broadcasted!",
+                rejected: "REJECTED",
+                terminated: "TERMINATED: Connection closed by user.",
+                notify: "Alerts",
+                power_limit: "Mining Power Limit",
+                power_current: "Current",
+                unlock_100: "UNLOCK 100%",
+                consent_title: "HIGH POWER CONSENT",
+                consent_desc: "To protect users, mining power is capped at 80% by default. Unlocking 100% may increase CPU usage, heat, fan noise, and battery drain. Proceed only if you understand and agree.",
+                consent_check: "I understand and agree to unlock 100% mining power on this device.",
+                consent_cancel: "CANCEL",
+                consent_agree: "AGREE & UNLOCK",
+                consent_required: "CONSENT REQUIRED: 100% power needs your explicit agreement.",
+                unlocked: "Unlocked",
+                capped_80: "Cap 80%"
+            },
+            zh: {
+                back_to_dashboard: "← 返回仪表盘",
+                center: "中心",
+                config_icon: "⚙️",
+                configuration: "挖矿配置",
+                wallet_address: "钱包地址",
+                enter_address: "输入 DIBI8 地址...",
+                worker_id: "矿工 ID",
+                perf_icon: "⚡",
+                live_perf: "实时性能",
+                blocks_mined: "已挖区块",
+                total_reward: "总收益",
+                uptime: "运行时间",
+                init_mining: "初始化挖矿",
+                terminate: "停止挖矿",
+                log_icon: "📝",
+                system_logs: "系统日志",
+                sys_ready: "系统就绪。等待用户初始化...",
+                err_no_address: "错误：钱包地址是必填项。",
+                initializing: "初始化中：正在认证",
+                new_job: "新任务：已收到任务头",
+                success_block: "成功：区块已找到并广播！",
+                rejected: "已拒绝",
+                terminated: "已终止：用户关闭了连接。",
+                notify: "通知",
+                power_limit: "网页挖矿强度上限",
+                power_current: "当前",
+                unlock_100: "解锁 100%",
+                consent_title: "高强度同意确认",
+                consent_desc: "为保护用户，默认仅允许开到 80%。解锁 100% 可能导致 CPU 占用上升、发热、风扇噪音、耗电增加。仅在你明确理解并同意后继续。",
+                consent_check: "我已知晓并同意：在本设备上解锁 100% 网页挖矿强度。",
+                consent_cancel: "取消",
+                consent_agree: "同意并解锁",
+                consent_required: "需要同意：开启 100% 前必须明确授权。",
+                unlocked: "已解锁",
+                capped_80: "上限 80%"
+            },
+            ko: {
+                back_to_dashboard: "← 대시보드로 돌아가기",
+                center: "센터",
+                config_icon: "⚙️",
+                configuration: "구성",
+                wallet_address: "지갑 주소",
+                enter_address: "DIBI8 주소 입력...",
+                worker_id: "광부 ID",
+                perf_icon: "⚡",
+                live_perf: "실시간 성능",
+                blocks_mined: "채굴된 블록",
+                total_reward: "총 보상",
+                uptime: "가동 시간",
+                init_mining: "마이닝 초기화",
+                terminate: "마이닝 종료",
+                log_icon: "📝",
+                system_logs: "시스템 로그",
+                sys_ready: "시스템이 준비되었습니다. 사용자 초기화를 기다리는 중...",
+                err_no_address: "오류: 지갑 주소는 필수입니다.",
+                initializing: "초기화 중: 인증 중",
+                new_job: "새 작업: 작업 헤더를 받았습니다",
+                success_block: "성공: 블록을 찾아서 브로드캐스트했습니다!",
+                rejected: "거부됨",
+                terminated: "종료됨: 사용자에 의해 연결이 닫혔습니다.",
+                notify: "알림",
+                power_limit: "채굴 강도 제한",
+                power_current: "현재",
+                unlock_100: "100% 잠금 해제",
+                consent_title: "고강도 동의 확인",
+                consent_desc: "사용자 보호를 위해 기본 채굴 강도는 80%로 제한됩니다. 100% 잠금 해제 시 CPU 사용률, 발열, 팬 소음, 배터리 소모가 증가할 수 있습니다. 이해하고 동의하는 경우에만 진행하세요.",
+                consent_check: "이해했으며, 이 장치에서 채굴 강도 100%를 잠금 해제하는 데 동의합니다.",
+                consent_cancel: "취소",
+                consent_agree: "동의 및 해제",
+                consent_required: "동의 필요: 100%는 명시적 동의가 필요합니다.",
+                unlocked: "해제됨",
+                capped_80: "80% 제한"
+            },
+            vi: {
+                back_to_dashboard: "← QUAY LẠI BẢNG ĐIỀU KHIỂN",
+                center: "TRUNG TÂM",
+                config_icon: "⚙️",
+                configuration: "CẤU HÌNH",
+                wallet_address: "Địa chỉ ví",
+                enter_address: "Nhập địa chỉ DIBI8...",
+                worker_id: "ID Thợ đào",
+                perf_icon: "⚡",
+                live_perf: "HIỆU SUẤT TRỰC TIẾP",
+                blocks_mined: "Khối đã đào",
+                total_reward: "Tổng phần thưởng",
+                uptime: "Thời gian hoạt động",
+                init_mining: "KHỞI TẠO KHAI THÁC",
+                terminate: "CHẤM DỨT",
+                log_icon: "📝",
+                system_logs: "NHẬT KÝ HỆ THỐNG",
+                sys_ready: "Hệ thống đã sẵn sàng. Đang chờ khởi tạo từ người dùng...",
+                err_no_address: "LỖI: Địa chỉ ví là bắt buộc.",
+                initializing: "ĐANG KHỞI TẠO: Đang xác thực",
+                new_job: "NHIỆM VỤ MỚI: Đã nhận được tiêu đề tác vụ",
+                success_block: "THÀNH CÔNG: Đã tìm thấy khối và phát sóng!",
+                rejected: "BỊ TỪ CHỐI",
+                terminated: "ĐÃ CHẤM DỨT: Kết nối đã được đóng bởi người dùng.",
+                notify: "Thông báo",
+                power_limit: "Giới hạn công suất đào",
+                power_current: "Hiện tại",
+                unlock_100: "MỞ KHÓA 100%",
+                consent_title: "XÁC NHẬN CÔNG SUẤT CAO",
+                consent_desc: "Để bảo vệ người dùng, công suất đào mặc định bị giới hạn ở 80%. Mở khóa 100% có thể tăng mức dùng CPU, nhiệt, tiếng ồn quạt và hao pin. Chỉ tiếp tục nếu bạn hiểu và đồng ý.",
+                consent_check: "Tôi hiểu và đồng ý mở khóa công suất đào 100% trên thiết bị này.",
+                consent_cancel: "HỦY",
+                consent_agree: "ĐỒNG Ý & MỞ KHÓA",
+                consent_required: "CẦN ĐỒNG Ý: 100% yêu cầu bạn xác nhận rõ ràng.",
+                unlocked: "Đã mở",
+                capped_80: "Giới hạn 80%"
+            }
+        };
+
+        let currentLang = localStorage.getItem('dibi8_lang') || 'en';
+
+        function setLang(lang) {
+            currentLang = lang;
+            localStorage.setItem('dibi8_lang', lang);
+            updateUI();
+        }
+
+        function updateUI() {
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (i18n[currentLang][key]) {
+                    el.innerText = i18n[currentLang][key];
+                }
+            });
+            document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+                const key = el.getAttribute('data-i18n-placeholder');
+                if (i18n[currentLang][key]) {
+                    el.placeholder = i18n[currentLang][key];
+                }
+            });
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.innerText.toLowerCase().includes(currentLang === 'zh' ? '中' : currentLang === 'ko' ? '한' : currentLang === 'vi' ? 'vn' : 'en'));
+            });
+            if (typeof syncPowerUI === 'function') syncPowerUI();
+        }
+
+        // 初始化语言
+        updateUI();
+
+        const consentKey = 'dibi8_power_consent';
+        let pendingStart = false;
+
+        function hasConsent() {
+            return localStorage.getItem(consentKey) === 'true';
+        }
+
+        function setConsent(val) {
+            localStorage.setItem(consentKey, val ? 'true' : 'false');
+        }
+
+        function getPowerMax() {
+            return hasConsent() ? 100 : 80;
+        }
+
+        function syncPowerUI() {
+            const slider = document.getElementById('powerSlider');
+            const valueEl = document.getElementById('powerValue');
+            const hintEl = document.getElementById('powerCapHint');
+            const unlockBtn = document.getElementById('unlockBtn');
+
+            slider.max = String(getPowerMax());
+            let v = parseInt(slider.value || '60', 10);
+            if (!Number.isFinite(v)) v = 60;
+            const max = getPowerMax();
+            if (v > max) v = max;
+            if (v < 1) v = 1;
+            slider.value = String(v);
+            valueEl.textContent = `${v}%`;
+
+            const hintKey = hasConsent() ? 'unlocked' : 'capped_80';
+            hintEl.textContent = i18n[currentLang][hintKey] ? `(${i18n[currentLang][hintKey]})` : '';
+            unlockBtn.disabled = hasConsent();
+        }
+
+        function openConsentModal() {
+            const modal = document.getElementById('consentModal');
+            const check = document.getElementById('consentCheck');
+            const agree = document.getElementById('consentAgree');
+            check.checked = false;
+            agree.disabled = true;
+            modal.classList.remove('hidden');
+        }
+
+        function closeConsentModal() {
+            const modal = document.getElementById('consentModal');
+            modal.classList.add('hidden');
+        }
+
+        function cancelConsent() {
+            pendingStart = false;
+            closeConsentModal();
+        }
+
+        function acceptConsent() {
+            const check = document.getElementById('consentCheck');
+            if (!check.checked) return;
+            const shouldStart = pendingStart;
+            setConsent(true);
+            closeConsentModal();
+            syncPowerUI();
+            pendingStart = false;
+            if (shouldStart) startMining();
+        }
+
+        document.getElementById('consentCheck').addEventListener('change', (e) => {
+            document.getElementById('consentAgree').disabled = !e.target.checked;
+        });
+
+        document.getElementById('powerSlider').addEventListener('input', () => {
+            const slider = document.getElementById('powerSlider');
+            const v = parseInt(slider.value || '1', 10);
+            if (v > 80 && !hasConsent()) {
+                slider.value = '80';
+                syncPowerUI();
+                openConsentModal();
+                log('', 'info', 'consent_required');
+                return;
+            }
+            localStorage.setItem('dibi8_power', slider.value);
+            syncPowerUI();
+        });
+
+        const savedPower = parseInt(localStorage.getItem('dibi8_power') || '60', 10);
+        document.getElementById('powerSlider').value = String(Number.isFinite(savedPower) ? savedPower : 60);
+        syncPowerUI();
+
+        function log(msg, type = 'info', i18nKey = null) {
+            const box = document.getElementById('logBox');
+            const time = new Date().toLocaleTimeString();
+            const entry = document.createElement('div');
+            entry.className = `log-entry log-${type}`;
+            
+            let displayMsg = msg;
+            if (i18nKey && i18n[currentLang][i18nKey]) {
+                displayMsg = i18n[currentLang][i18nKey] + (msg ? `: ${msg}` : '');
+            }
+            
+            entry.innerHTML = `<span class="log-time">[${time}]</span><span>${displayMsg}</span>`;
+            box.appendChild(entry);
+            box.scrollTop = box.scrollHeight;
+        }
+
+        function updateRuntime() {
+            if (!startTime) return;
+            const elapsed = Math.floor((Date.now() - startTime) / 1000);
+            const mins = Math.floor(elapsed / 60).toString().padStart(2, '0');
+            const secs = (elapsed % 60).toString().padStart(2, '0');
+            document.getElementById('runtime').textContent = `${mins}:${secs}`;
+            const elapsedMins = elapsed / 60;
+            const hashrate = elapsedMins > 0 ? (minedBlocks / elapsedMins).toFixed(2) : "0.00";
+            document.getElementById('hashrate').textContent = hashrate;
+            updateChart(parseFloat(hashrate));
+        }
+
+        // 监听来自服务器的任务推送
+        socket.on('mining_job', (job) => {
+            currentJob = job;
+            log(`${job.header.substring(0, 12)}...`, 'info', 'new_job');
+        });
+
+        // 监听提交结果反馈
+        socket.on('share_result', (data) => {
+            if (data.success) {
+                minedBlocks++;
+                document.getElementById('minedBlocks').textContent = minedBlocks;
+                document.getElementById('earnings').textContent = (minedBlocks * 100) + ' DIBI';
+                log('', 'success', 'success_block');
+            } else {
+                log(`${data.message || data.error}`, 'error', 'rejected');
+            }
+        });
+
+        async function startMining() {
+            const address = document.getElementById('walletAddress').value;
+            if (!address) {
+                log('', 'error', 'err_no_address');
+                return;
+            }
+
+            syncPowerUI();
+            const power = parseInt(document.getElementById('powerSlider').value || '60', 10);
+            if (power > 80 && !hasConsent()) {
+                pendingStart = true;
+                openConsentModal();
+                log('', 'info', 'consent_required');
+                return;
+            }
+            pendingStart = false;
+
+            mining = true;
+            startTime = Date.now();
+            minedBlocks = 0;
+            
+            document.getElementById('btnStart').disabled = true;
+            document.getElementById('btnStop').disabled = false;
+            document.getElementById('miningIcon').classList.add('active');
+            document.getElementById('miningOrb').classList.add('active');
+
+            log(`${address}...`, 'info', 'initializing');
+            
+            // WebSocket 握手认证
+            socket.emit('mining_auth', { 
+                address, 
+                worker: document.getElementById('workerName').value 
+            });
+
+            runtimeInterval = setInterval(updateRuntime, 1000);
+
+            // 模拟挖矿循环 (WebSocket 模式下只需不断提交 nonce)
+            while (mining) {
+                if (currentJob) {
+                    const p = parseInt(document.getElementById('powerSlider').value || '60', 10);
+                    const fakeNonce = Math.floor(Math.random() * 1000000);
+                    // 模拟找到有效哈希的概率 (WebSocket 提交)
+                    const submitChance = Math.min(0.95, Math.max(0.05, (p / 100) * 0.35));
+                    if (Math.random() < submitChance) { 
+                        socket.emit('submit_share', { 
+                            nonce: fakeNonce, 
+                            header: currentJob.header 
+                        });
+                    }
+                }
+                const p2 = parseInt(document.getElementById('powerSlider').value || '60', 10);
+                const delay = Math.max(120, Math.round(1200 - (p2 * 10.5)));
+                await new Promise(r => setTimeout(r, delay));
+            }
+        }
+
+        function stopMining() {
+            mining = false;
+            document.getElementById('btnStart').disabled = false;
+            document.getElementById('btnStop').disabled = true;
+            document.getElementById('miningIcon').classList.remove('active');
+            document.getElementById('miningOrb').classList.remove('active');
+            if (runtimeInterval) { clearInterval(runtimeInterval); runtimeInterval = null; }
+            log('', 'info', 'terminated');
+        }
+    </script>
+</body>
+</html>

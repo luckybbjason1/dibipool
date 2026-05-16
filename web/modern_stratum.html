@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DIBI8 Stratum | 专业连接指南</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@300;400;600&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #ffd700;
+            --primary-glow: rgba(255, 215, 0, 0.4);
+            --bg-dark: #050507;
+            --card-bg: rgba(255, 255, 255, 0.03);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --accent-green: #00ffaa;
+            --accent-blue: #00d4ff;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-dark);
+            color: #fff;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* 动态背景：深度参考 dibi8.com 的数字维度空间 */
+        .bg-animate {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -1;
+            background: radial-gradient(circle at center, #0a0a1a 0%, #050508 100%);
+            overflow: hidden;
+        }
+        
+        #bg-canvas {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+        }
+
+        .bg-grid {
+            position: absolute;
+            top: 0; left: 0; width: 200%; height: 200%;
+            background-image: 
+                linear-gradient(rgba(255,215,0,0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,215,0,0.03) 1px, transparent 1px);
+            background-size: 60px 60px;
+            transform: perspective(500px) rotateX(60deg) translateY(-20%) translateX(-25%);
+            animation: gridMove 20s linear infinite;
+            opacity: 0.5;
+        }
+
+        @keyframes gridMove {
+            0% { transform: perspective(500px) rotateX(60deg) translateY(-20%) translateX(-25%); }
+            100% { transform: perspective(500px) rotateX(60deg) translateY(0%) translateX(-25%); }
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .back-link {
+            color: rgba(255, 255, 255, 0.4);
+            text-decoration: none;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 20px;
+            transition: 0.3s;
+        }
+
+        .back-link:hover { color: var(--primary); }
+
+        h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2.5rem;
+            background: linear-gradient(90deg, #fff, var(--primary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+        }
+
+        /* 核心内容布局 */
+        .content-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        .panel {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--card-border);
+            border-radius: 24px;
+            padding: 30px;
+            transition: 0.3s;
+        }
+
+        .panel:hover { border-color: rgba(255, 215, 0, 0.2); }
+
+        .panel-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.1rem;
+            color: var(--primary);
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        /* 端点列表 */
+        .endpoint-card {
+            background: rgba(0,0,0,0.2);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 15px;
+        }
+
+        .endpoint-tag {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            color: var(--accent-blue);
+            background: rgba(0, 212, 255, 0.1);
+            padding: 3px 8px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            display: inline-block;
+        }
+
+        .endpoint-url {
+            font-family: 'Fira Code', monospace;
+            font-size: 1rem;
+            color: #fff;
+            word-break: break-all;
+            margin: 10px 0;
+        }
+
+        /* 配置生成器 */
+        .config-box {
+            background: #000;
+            border-radius: 12px;
+            padding: 20px;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.85rem;
+            color: #00ffaa;
+            position: relative;
+            border: 1px solid rgba(0, 255, 170, 0.1);
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 10px; right: 10px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--card-border);
+            color: #fff;
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-size: 0.7rem;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .copy-btn:hover { background: var(--primary); color: #000; }
+
+        .software-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .guide-section {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid var(--card-border);
+        }
+
+        .os-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        .os-win { background: rgba(0, 164, 239, 0.1); color: #00a4ef; border: 1px solid rgba(0, 164, 239, 0.2); }
+        .os-linux { background: rgba(233, 84, 32, 0.1); color: #e95420; border: 1px solid rgba(233, 84, 32, 0.2); }
+
+        .data-share-box {
+            background: linear-gradient(90deg, rgba(255,215,0,0.05), transparent);
+            border-left: 3px solid var(--primary);
+            padding: 15px 20px;
+            margin-top: 25px;
+            border-radius: 0 12px 12px 0;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: #000;
+            box-shadow: 0 0 15px var(--primary-glow);
+            transition: 0.3s;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .btn-primary:hover {
+            transform: scale(1.02);
+            box-shadow: 0 0 25px var(--primary-glow);
+        }
+
+        .sw-btn {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--card-border);
+            color: rgba(255,255,255,0.6);
+            padding: 10px;
+            border-radius: 10px;
+            text-align: center;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: 0.3s;
+        }
+
+        .sw-btn.active {
+            background: var(--primary);
+            color: #000;
+            border-color: var(--primary);
+        }
+
+        @media (max-width: 868px) {
+            .content-layout { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-animate">
+        <canvas id="bg-canvas"></canvas>
+        <div class="bg-grid"></div>
+    </div>
+
+    <div class="container">
+        <header>
+            <a href="/modern" class="back-link" data-i18n="back_to_dashboard">← BACK TO DASHBOARD</a>
+            <h1>STRATUM <span data-i18n="connectivity">CONNECTIVITY</span></h1>
+        </header>
+
+        <div class="content-layout">
+            <!-- 左侧：端点信息 -->
+            <div class="panel">
+                <div class="panel-title"><span>🌍</span> <span data-i18n="global_endpoints">GLOBAL ENDPOINTS</span></div>
+                
+                <div class="endpoint-card">
+                    <span class="endpoint-tag" data-i18n="asia_node">ASIA - HONG KONG</span>
+                    <div class="endpoint-url">stratum+tcp://hk.dibi8.com:4444</div>
+                    <div style="font-size: 0.75rem; color: rgba(255,255,255,0.4);" data-i18n="port_low_diff">Port 4444: Low Difficulty (CPU/Low-end GPU)</div>
+                </div>
+
+                <div class="endpoint-card">
+                    <span class="endpoint-tag" data-i18n="us_node">USA - SILICON VALLEY</span>
+                    <div class="endpoint-url">stratum+tcp://us.dibi8.com:5555</div>
+                    <div style="font-size: 0.75rem; color: rgba(255,255,255,0.4);" data-i18n="port_high_diff">Port 5555: High Difficulty (ASIC/Mining Rig)</div>
+                </div>
+
+                <div class="endpoint-card" style="border-left: 3px solid var(--accent-green);">
+                    <span class="endpoint-tag" style="color: var(--accent-green); background: rgba(0,255,170,0.1);" data-i18n="ssl_secure">SSL / TLS SECURE</span>
+                    <div class="endpoint-url">stratum+ssl://pool.dibi8.com:8888</div>
+                    <div style="font-size: 0.75rem; color: rgba(255,255,255,0.4);" data-i18n="encrypted_comm">Encrypted communication for maximum security</div>
+                </div>
+            </div>
+
+            <!-- 右侧：配置生成器 -->
+            <div class="panel">
+                <div class="panel-title"><span>🛠️</span> <span data-i18n="config_generator">CONFIG GENERATOR</span></div>
+                
+                <p style="font-size: 0.8rem; color: rgba(255,255,255,0.5); margin-bottom: 20px;" data-i18n="select_sw">Select your mining software to generate command line:</p>
+                
+                <div class="software-grid">
+                    <div class="sw-btn active" onclick="selectSW('gminer')">GMINER</div>
+                    <div class="sw-btn" onclick="selectSW('trex')">T-REX</div>
+                    <div class="sw-btn" onclick="selectSW('srb')">SRBMINER</div>
+                    <div class="sw-btn" onclick="selectSW('nbminer')">NBMINER</div>
+                </div>
+
+                <div class="config-box">
+                    <button class="copy-btn" onclick="copyConfig()" data-i18n="copy">COPY</button>
+                    <div id="configText">
+                        gminer.exe --algo dibi8 --server hk.dibi8.com:4444 --user 0xf147b4cd78a27edc7df78cd9fe98ac62774717b6.worker01
+                    </div>
+                </div>
+
+                <!-- 数据共享说明 -->
+                <div class="data-share-box">
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                        <span style="font-size: 1.2rem;">📊</span>
+                        <strong style="color: var(--primary); font-size: 0.9rem;" data-i18n="data_unified_title">Unified Data Dashboard</strong>
+                    </div>
+                    <p style="font-size: 0.8rem; color: rgba(255,255,255,0.7); line-height: 1.5;" data-i18n="data_unified_desc">
+                        All mining data (Stratum & Web Miner) under the same wallet address is aggregated. You can monitor your global hashrate in real-time on the Dashboard.
+                    </p>
+                </div>
+
+                <!-- 平台指南 -->
+                <div class="guide-section">
+                    <div class="panel-title" style="font-size: 1rem; margin-bottom: 15px;"><span>🚀</span> <span data-i18n="how_to_start">HOW TO START</span></div>
+                    
+                    <!-- Windows -->
+                    <div style="margin-bottom: 25px;">
+                        <div class="os-badge os-win">WINDOWS</div>
+                        <div style="font-size: 0.8rem; color: rgba(255,255,255,0.7); line-height: 1.6;">
+                            1. <a href="https://github.com/develsoftware/GMinerRelease/releases" target="_blank" class="btn-primary" style="display: inline-block; padding: 4px 12px; border-radius: 6px; text-decoration: none; font-size: 0.7rem; margin: 0 5px;" data-i18n="dl_win">DOWNLOAD GMINER (WINDOWS)</a> <br>
+                            2. <span data-i18n="win_step_2">Create a <code>mine.bat</code> file in the folder.</span> <br>
+                            3. <span data-i18n="win_step_3">Paste the generated config and run.</span>
+                        </div>
+                    </div>
+
+                    <!-- Linux -->
+                    <div>
+                        <div class="os-badge os-linux">LINUX / HIVEOS</div>
+                        <div style="font-size: 0.8rem; color: rgba(255,255,255,0.7); line-height: 1.6;">
+                            1. <span data-i18n="linux_step_1">Install dependencies & Download:</span> <br>
+                            <div class="config-box" style="margin: 8px 0; padding: 10px; font-size: 0.75rem;">
+                                <button class="copy-btn" onclick="copyText('sudo apt update && sudo apt install -y wget screen && wget https://github.com/develsoftware/GMinerRelease/releases/download/3.43/gminer_3_43_linux64.tar.xz')">COPY</button>
+                                <code>sudo apt update && sudo apt install ...</code>
+                            </div>
+                            2. <span data-i18n="linux_step_2">Extract & Grant permission:</span> <br>
+                            <div class="config-box" style="margin: 8px 0; padding: 10px; font-size: 0.75rem;">
+                                <button class="copy-btn" onclick="copyText('tar -xf gminer_3_43_linux64.tar.xz && chmod +x miner')">COPY</button>
+                                <code>tar -xf ... && chmod +x miner</code>
+                            </div>
+                            3. <span data-i18n="linux_step_3">Run in background (Screen):</span> <br>
+                            <div class="config-box" style="margin: 8px 0; padding: 10px; font-size: 0.75rem;">
+                                <button class="copy-btn" onclick="copyText('screen -S dibi_mining ./miner --algo dibi8 --server pool.dibi8.com:4444 --user 0xf147b4cd78a27edc7df78cd9fe98ac62774717b6')">COPY</button>
+                                <code>screen -S dibi_mining ./miner ...</code>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 30px;">
+                    <div class="panel-title" style="font-size: 0.9rem;"><span>💡</span> <span data-i18n="quick_tips">QUICK TIPS</span></div>
+                    <ul style="font-size: 0.8rem; color: rgba(255,255,255,0.6); padding-left: 20px; line-height: 1.8;">
+                        <li data-i18n="tip_wallet">Use your DIBI8 wallet address as the username.</li>
+                        <li data-i18n="tip_worker">Append a worker name using a dot (e.g. .rig01).</li>
+                        <li data-i18n="tip_reconnect">Our Stratum V2 bridge supports 0ms reconnection.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 背景动画逻辑 (与首页一致)
+        const canvas = document.getElementById('bg-canvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+        function initCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+        class Particle {
+            constructor() { this.reset(); }
+            reset() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.size = Math.random() * 1.5 + 0.5;
+                this.vx = (Math.random() - 0.5) * 0.5;
+                this.vy = (Math.random() - 0.5) * 0.5;
+                this.color = `rgba(255, 215, 0, ${Math.random() * 0.5 + 0.2})`;
+            }
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
+                if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
+            }
+            draw() {
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+        function createParticles() {
+            particles = []; const count = Math.floor(window.innerWidth / 15);
+            for (let i = 0; i < count; i++) particles.push(new Particle());
+        }
+        function drawLines() {
+            for (let i = 0; i < particles.length; i++) {
+                for (let j = i + 1; j < particles.length; j++) {
+                    const dx = particles[i].x - particles[j].x;
+                    const dy = particles[i].y - particles[j].y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    if (dist < 150) {
+                        ctx.strokeStyle = `rgba(255, 215, 0, ${0.15 * (1 - dist / 150)})`;
+                        ctx.lineWidth = 0.5;
+                        ctx.beginPath();
+                        ctx.moveTo(particles[i].x, particles[i].y);
+                        ctx.lineTo(particles[j].x, particles[j].y);
+                        ctx.stroke();
+                    }
+                }
+            }
+        }
+        function animate() {
+            if (document.hidden) {
+                requestAnimationFrame(animate);
+                return;
+            }
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach(p => { p.update(); p.draw(); });
+            drawLines();
+            requestAnimationFrame(animate);
+        }
+        window.addEventListener('resize', () => { initCanvas(); createParticles(); });
+        initCanvas(); createParticles(); animate();
+
+        // 软件选择逻辑
+        const configs = {
+            gminer: "gminer.exe --algo dibi8 --server hk.dibi8.com:4444 --user 0xf147b4cd78a27edc7df78cd9fe98ac62774717b6.worker01",
+            trex: "t-rex.exe -a dibi8 -o stratum+tcp://hk.dibi8.com:4444 -u 0xf147b4cd78a27edc7df78cd9fe98ac62774717b6 -p x",
+            srb: "SRBMiner-MULTI.exe --algorithm dibi8 --pool hk.dibi8.com:4444 --wallet 0xf147b4cd78a27edc7df78cd9fe98ac62774717b6",
+            nbminer: "nbminer.exe -a dibi8 -o stratum+tcp://hk.dibi8.com:4444 -u 0xf147b4cd78a27edc7df78cd9fe98ac62774717b6"
+        };
+
+        function selectSW(sw) {
+            document.querySelectorAll('.sw-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById('configText').innerText = configs[sw];
+        }
+
+        function copyConfig() {
+            const text = document.getElementById('configText').innerText;
+            copyText(text);
+        }
+
+        function copyText(text) {
+            navigator.clipboard.writeText(text);
+            const btn = event.target;
+            const oldText = btn.innerText;
+            btn.innerText = "COPIED!";
+            setTimeout(() => btn.innerText = oldText, 2000);
+        }
+
+        // 多语言逻辑 (从 localStorage 获取)
+        const i18n = {
+            en: {
+                back_to_dashboard: "← BACK TO DASHBOARD",
+                connectivity: "CONNECTIVITY",
+                global_endpoints: "GLOBAL ENDPOINTS",
+                asia_node: "ASIA - HONG KONG",
+                port_low_diff: "Port 4444: Low Difficulty (CPU/Low-end GPU)",
+                us_node: "USA - SILICON VALLEY",
+                port_high_diff: "Port 5555: High Difficulty (ASIC/Mining Rig)",
+                ssl_secure: "SSL / TLS SECURE",
+                encrypted_comm: "Encrypted communication for maximum security",
+                config_generator: "CONFIG GENERATOR",
+                select_sw: "Select your mining software to generate command line:",
+                copy: "COPY",
+                data_unified_title: "Unified Data Dashboard",
+                data_unified_desc: "All mining data (Stratum & Web Miner) under the same wallet address is aggregated. You can monitor your global hashrate in real-time on the Dashboard.",
+                how_to_start: "HOW TO START",
+                dl_win: "DOWNLOAD GMINER (WINDOWS)",
+                dl_linux: "DOWNLOAD GMINER (LINUX)",
+                win_step_2: "Create a mine.bat file in the folder.",
+                win_step_3: "Paste the generated config and run.",
+                linux_step_1: "Install dependencies & Download:",
+                linux_step_2: "Extract & Grant permission:",
+                linux_step_3: "Run in background (Screen):",
+                quick_tips: "QUICK TIPS",
+                tip_wallet: "Use your DIBI8 wallet address as the username.",
+                tip_worker: "Append a worker name using a dot (e.g. .rig01).",
+                tip_reconnect: "Our Stratum V2 bridge supports 0ms reconnection."
+            },
+            zh: {
+                back_to_dashboard: "← 返回仪表盘",
+                connectivity: "连接指南",
+                global_endpoints: "全球节点",
+                asia_node: "亚洲 - 香港",
+                port_low_diff: "端口 4444: 低难度 (CPU/低端显卡)",
+                us_node: "美国 - 硅谷",
+                port_high_diff: "端口 5555: 高难度 (ASIC/大型矿机)",
+                ssl_secure: "SSL / TLS 安全连接",
+                encrypted_comm: "加密通信，确保最大安全性",
+                config_generator: "配置生成器",
+                select_sw: "选择您的挖矿软件以生成命令行：",
+                copy: "复制",
+                data_unified_title: "统一数据看板",
+                data_unified_desc: "同一钱包地址下的所有挖矿数据（Stratum 矿机与网页挖矿）将自动汇总。您可以在仪表盘实时监控您的全球总算力。",
+                how_to_start: "如何开始",
+                dl_win: "下载 GMINER (WINDOWS)",
+                dl_linux: "下载 GMINER (LINUX)",
+                win_step_2: "在文件夹中创建一个 mine.bat 文件。",
+                win_step_3: "粘贴生成的配置并运行它。",
+                linux_step_1: "安装依赖并下载：",
+                linux_step_2: "解压并赋予权限：",
+                linux_step_3: "后台运行 (Screen)：",
+                quick_tips: "快速提示",
+                tip_wallet: "使用您的 DIBI8 钱包地址作为用户名。",
+                tip_worker: "使用点号添加矿工名称 (例如 .rig01)。",
+                tip_reconnect: "我们的 Stratum V2 桥接器支持 0ms 重连。"
+            },
+            ko: {
+                back_to_dashboard: "← 대시보드로 돌아가기",
+                connectivity: "연결성",
+                global_endpoints: "글로벌 엔드포인트",
+                asia_node: "아시아 - 홍콩",
+                port_low_diff: "포트 4444: 낮은 난이도 (CPU/저사양 GPU)",
+                us_node: "미국 - 실리콘 밸리",
+                port_high_diff: "포트 5555: 높은 난이도 (ASIC/채굴기)",
+                ssl_secure: "SSL / TLS 보안",
+                encrypted_comm: "최대 보안을 위한 암호화 통신",
+                config_generator: "구성 생성기",
+                select_sw: "명령줄을 생성할 마이닝 소프트웨어를 선택하십시오:",
+                copy: "복사",
+                data_unified_title: "통합 데이터 대시보드",
+                data_unified_desc: "동일한 지갑 주소 아래의 모든 마이닝 데이터(Stratum 및 웹 마이너)가 통합됩니다. 대시보드에서 실시간으로 글로벌 해시레이트를 모니터링할 수 있습니다.",
+                how_to_start: "시작하는 방법",
+                dl_win: "GMINER 다운로드 (WINDOWS)",
+                dl_linux: "GMINER 다운로드 (LINUX)",
+                win_step_2: "폴더에 mine.bat 파일을 만듭니다.",
+                win_step_3: "생성된 구성을 붙여넣고 실행합니다.",
+                linux_step_1: "종속성 설치 및 다운로드:",
+                linux_step_2: "압축 해제 및 권한 부여:",
+                linux_step_3: "백그라운드 실행 (Screen):",
+                quick_tips: "빠른 팁",
+                tip_wallet: "DIBI8 지갑 주소를 사용자 이름으로 사용하십시오.",
+                tip_worker: "점(.)을 사용하여 작업자 이름을 추가하십시오 (예: .rig01).",
+                tip_reconnect: "우리의 Stratum V2 브리지는 0ms 재연결을 지원합니다."
+            },
+            vi: {
+                back_to_dashboard: "← QUAY LẠI BẢNG ĐIỀU KHIỂN",
+                connectivity: "KẾT NỐI",
+                global_endpoints: "CÁC ĐIỂM CUỐI TOÀN CẦU",
+                asia_node: "CHÂU Á - HỒNG KÔNG",
+                port_low_diff: "Cổng 4444: Độ khó thấp (CPU/GPU cấu hình thấp)",
+                us_node: "HOA KỲ - THUNG LŨNG SILICON",
+                port_high_diff: "Cổng 5555: Độ khó cao (ASIC/Máy đào)",
+                ssl_secure: "BẢO MẬT SSL / TLS",
+                encrypted_comm: "Giao tiếp mã hóa để bảo mật tối đa",
+                config_generator: "BỘ TẠO CẤU HÌNH",
+                select_sw: "Chọn phần mềm khai thác của bạn để tạo dòng lệnh:",
+                copy: "SAO CHÉP",
+                data_unified_title: "Bảng điều khiển dữ liệu thống nhất",
+                data_unified_desc: "Tất cả dữ liệu khai thác (Stratum & Web Miner) dưới cùng một địa chỉ ví đều được tổng hợp. Bạn có thể theo dõi tốc độ băm toàn cầu của mình trong thời gian thực trên Bảng điều khiển.",
+                how_to_start: "LÀM THẾ NÀO ĐỂ BẮT ĐẦU",
+                dl_win: "TẢI XUỐNG GMINER (WINDOWS)",
+                dl_linux: "TẢI XUỐNG GMINER (LINUX)",
+                win_step_2: "Tạo tệp mine.bat trong thư mục.",
+                win_step_3: "Dán cấu hình đã tạo và chạy nó.",
+                linux_step_1: "Cài đặt phụ thuộc & Tải xuống:",
+                linux_step_2: "Giải nén & Cấp quyền:",
+                linux_step_3: "Chạy trong nền (Screen):",
+                quick_tips: "MẸO NHANH",
+                tip_wallet: "Sử dụng địa chỉ ví DIBI8 của bạn làm tên người dùng.",
+                tip_worker: "Thêm tên thợ đào bằng dấu chấm (ví dụ: .rig01).",
+                tip_reconnect: "Cầu nối Stratum V2 của chúng tôi hỗ trợ kết nối lại 0ms."
+            }
+        };
+
+        const currentLang = localStorage.getItem('dibi8_lang') || 'en';
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+            const key = el.getAttribute('data-i18n');
+            if (i18n[currentLang][key]) el.innerText = i18n[currentLang][key];
+        });
+    </script>
+</body>
+</html>

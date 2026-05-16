@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DIBI8 Wallet | 安全钱包生成器</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@300;400;600&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
+    <style>
+        :root {
+            --primary: #ffd700;
+            --primary-glow: rgba(255, 215, 0, 0.4);
+            --bg-dark: #050507;
+            --card-bg: rgba(255, 255, 255, 0.03);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --accent-red: #ff4d4d;
+            --accent-green: #00ffaa;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-dark);
+            color: #fff;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* 动态背景：深度参考 dibi8.com */
+        .bg-animate {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -1;
+            background: radial-gradient(circle at center, #0a0a1a 0%, #050508 100%);
+            overflow: hidden;
+        }
+        
+        #bg-canvas {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+        .back-link {
+            color: rgba(255, 255, 255, 0.4);
+            text-decoration: none;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 20px;
+            transition: 0.3s;
+        }
+
+        .back-link:hover { color: var(--primary); }
+
+        h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2.2rem;
+            background: linear-gradient(90deg, #fff, var(--primary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+        }
+
+        /* 安全警告面板 */
+        .security-notice {
+            background: rgba(255, 77, 77, 0.05);
+            border: 1px solid rgba(255, 77, 77, 0.2);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 30px;
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+        }
+
+        .security-icon {
+            font-size: 2rem;
+            color: var(--accent-red);
+        }
+
+        .security-content h3 {
+            color: var(--accent-red);
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1rem;
+            margin-bottom: 8px;
+        }
+
+        .security-content p {
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.7);
+            line-height: 1.6;
+        }
+
+        /* 钱包生成面板 */
+        .wallet-panel {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--card-border);
+            border-radius: 24px;
+            padding: 40px;
+            text-align: center;
+            transition: 0.3s;
+        }
+
+        .btn-generate {
+            background: var(--primary);
+            color: #000;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 12px;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            box-shadow: 0 0 20px var(--primary-glow);
+            transition: 0.3s;
+            margin-bottom: 20px;
+        }
+
+        .btn-generate:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 35px var(--primary-glow);
+        }
+
+        .result-box {
+            display: none;
+            margin-top: 30px;
+            text-align: left;
+            animation: fadeInUp 0.5s ease-out;
+        }
+
+        .field-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: var(--primary);
+            margin-bottom: 8px;
+            display: block;
+            letter-spacing: 1px;
+        }
+
+        .field-value {
+            background: rgba(0,0,0,0.3);
+            border: 1px solid var(--card-border);
+            padding: 15px;
+            border-radius: 12px;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.9rem;
+            word-break: break-all;
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .mnemonic-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .mnemonic-word {
+            background: rgba(255,255,255,0.05);
+            padding: 8px;
+            border-radius: 6px;
+            text-align: center;
+            font-size: 0.85rem;
+            border: 1px solid var(--card-border);
+        }
+
+        .copy-btn {
+            position: absolute;
+            right: 10px; top: 10px;
+            background: rgba(255,255,255,0.1);
+            border: none;
+            color: #fff;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            cursor: pointer;
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 600px) {
+            .mnemonic-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-animate">
+        <canvas id="bg-canvas"></canvas>
+    </div>
+
+    <div class="container">
+        <header>
+            <a href="/modern" class="back-link" data-i18n="back_to_dashboard">← BACK TO DASHBOARD</a>
+            <h1 data-i18n="wallet_generator">WALLET GENERATOR</h1>
+        </header>
+
+        <div class="security-notice">
+            <div class="security-icon">🛡️</div>
+            <div class="security-content">
+                <h3 data-i18n="security_title">ULTIMATE SECURITY PROTOCOL</h3>
+                <p data-i18n="security_desc">For maximum safety, please <strong>disconnect from the internet</strong> before generating. This tool runs 100% locally in your browser. Never share your mnemonic with anyone.</p>
+            </div>
+        </div>
+
+        <div class="wallet-panel">
+            <button class="btn-generate" onclick="generateWallet()" data-i18n="btn_generate">GENERATE NEW WALLET</button>
+            
+            <div id="resultBox" class="result-box">
+                <span class="field-label" data-i18n="mnemonic_label">SECRET RECOVERY PHRASE (12 WORDS)</span>
+                <div class="mnemonic-grid" id="mnemonicGrid"></div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div>
+                        <span class="field-label" data-i18n="address_label_native">DIBI8 NATIVE ADDRESS (dibi1...)</span>
+                        <div class="field-value">
+                            <span id="addressText"></span>
+                            <button class="copy-btn" onclick="copyText('addressText')" data-i18n="copy">COPY</button>
+                        </div>
+                    </div>
+                    <div>
+                        <span class="field-label" data-i18n="address_label_eth">ETH-COMPATIBLE ADDRESS (0x...)</span>
+                        <div class="field-value">
+                            <span id="ethAddressText"></span>
+                            <button class="copy-btn" onclick="copyText('ethAddressText')" data-i18n="copy">COPY</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="background: rgba(255, 215, 0, 0.05); padding: 15px; border-radius: 12px; border: 1px dashed var(--primary); margin-bottom: 20px;">
+                    <p style="font-size: 0.8rem; color: var(--primary);" data-i18n="address_note">💡 Both address formats are derived from the same mnemonic. Our pool supports both for mining rewards.</p>
+                </div>
+
+                <div style="background: rgba(0, 255, 170, 0.05); padding: 15px; border-radius: 12px; border: 1px dashed var(--accent-green);">
+                    <p style="font-size: 0.8rem; color: var(--accent-green);" data-i18n="save_warning">⚠️ SAVE THESE WORDS IN ORDER. WITHOUT THEM, YOUR FUNDS ARE LOST FOREVER.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 背景动画逻辑
+        const canvas = document.getElementById('bg-canvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+        function initCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+        class Particle {
+            constructor() { this.reset(); }
+            reset() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.size = Math.random() * 1.5 + 0.5;
+                this.vx = (Math.random() - 0.5) * 0.5;
+                this.vy = (Math.random() - 0.5) * 0.5;
+                this.color = `rgba(255, 215, 0, ${Math.random() * 0.5 + 0.2})`;
+            }
+            update() {
+                this.x += this.vx; this.y += this.vy;
+                if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
+                if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
+            }
+            draw() {
+                ctx.fillStyle = this.color; ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fill();
+            }
+        }
+        function createParticles() {
+            particles = []; const count = Math.floor(window.innerWidth / 15);
+            for (let i = 0; i < count; i++) particles.push(new Particle());
+        }
+        function drawLines() {
+            for (let i = 0; i < particles.length; i++) {
+                for (let j = i + 1; j < particles.length; j++) {
+                    const dx = particles[i].x - particles[j].x;
+                    const dy = particles[i].y - particles[j].y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    if (dist < 150) {
+                        ctx.strokeStyle = `rgba(255, 215, 0, ${0.15 * (1 - dist / 150)})`;
+                        ctx.lineWidth = 0.5; ctx.beginPath(); ctx.moveTo(particles[i].x, particles[i].y); ctx.lineTo(particles[j].x, particles[j].y); ctx.stroke();
+                    }
+                }
+            }
+        }
+        function animate() {
+            if (document.hidden) { requestAnimationFrame(animate); return; }
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach(p => { p.update(); p.draw(); });
+            drawLines();
+            requestAnimationFrame(animate);
+        }
+        window.addEventListener('resize', () => { initCanvas(); createParticles(); });
+        initCanvas(); createParticles(); animate();
+
+        // 钱包生成逻辑
+        function generateWallet() {
+            const wallet = ethers.Wallet.createRandom();
+            const mnemonic = wallet.mnemonic.phrase;
+            
+            // DIBI8 地址衍生逻辑: dibi1 + RIPEMD160(SHA256(PubKey))[:20].hex()
+            // 注意: 这里为了前端演示，我们使用标准的衍生流程，实际主网需严格对标节点算法
+            const pubKey = wallet.publicKey;
+            const sha256 = CryptoJS.SHA256(CryptoJS.enc.Hex.parse(pubKey.substring(2)));
+            const ripemd160 = CryptoJS.RIPEMD160(sha256).toString();
+            const dibiAddress = "dibi1" + ripemd160;
+
+            // 显示结果
+            document.getElementById('resultBox').style.display = 'block';
+            document.getElementById('addressText').innerText = dibiAddress;
+            document.getElementById('ethAddressText').innerText = wallet.address;
+
+            const grid = document.getElementById('mnemonicGrid');
+            grid.innerHTML = '';
+            mnemonic.split(' ').forEach((word, i) => {
+                const div = document.createElement('div');
+                div.className = 'mnemonic-word';
+                div.innerText = `${i + 1}. ${word}`;
+                grid.appendChild(div);
+            });
+        }
+
+        function copyText(id) {
+            const text = document.getElementById(id).innerText;
+            navigator.clipboard.writeText(text);
+            const btn = event.target;
+            const oldText = btn.innerText;
+            btn.innerText = "COPIED!";
+            setTimeout(() => btn.innerText = oldText, 2000);
+        }
+
+        // 多语言逻辑
+        const i18n = {
+            en: {
+                back_to_dashboard: "← BACK TO DASHBOARD",
+                wallet_generator: "WALLET GENERATOR",
+                security_title: "ULTIMATE SECURITY PROTOCOL",
+                security_desc: "For maximum safety, please <strong>disconnect from the internet</strong> before generating. This tool runs 100% locally in your browser. Never share your mnemonic with anyone.",
+                btn_generate: "GENERATE NEW WALLET",
+                mnemonic_label: "SECRET RECOVERY PHRASE (12 WORDS)",
+                address_label_native: "DIBI8 NATIVE ADDRESS (dibi1...)",
+                address_label_eth: "ETH-COMPATIBLE ADDRESS (0x...)",
+                address_note: "💡 Both address formats are derived from the same mnemonic. Our pool supports both for mining rewards.",
+                copy: "COPY",
+                save_warning: "⚠️ SAVE THESE WORDS IN ORDER. WITHOUT THEM, YOUR FUNDS ARE LOST FOREVER."
+            },
+            zh: {
+                back_to_dashboard: "← 返回仪表盘",
+                wallet_generator: "钱包生成器",
+                security_title: "最高安全协议",
+                security_desc: "为了确保最高安全性，请在生成前<strong>断开网络连接</strong>。本工具 100% 在您的浏览器本地运行。切勿将助记词泄露给任何人。",
+                btn_generate: "生成新钱包",
+                mnemonic_label: "绝密助记词 (12 个单词)",
+                address_label_native: "DIBI8 原生地址 (dibi1...)",
+                address_label_eth: "ETH 兼容地址 (0x...)",
+                address_note: "💡 两种地址格式均由同一组助记词生成。我们的矿池同时支持这两种地址进行挖矿和收益发放。",
+                copy: "复制",
+                save_warning: "⚠️ 请按顺序保存这些单词。一旦丢失，您的资产将永远无法找回。"
+            },
+            ko: {
+                back_to_dashboard: "← 대시보드로 돌아가기",
+                wallet_generator: "지갑 생성기",
+                security_title: "최고 보안 프로토콜",
+                security_desc: "최대 보안을 위해 생성 전 <strong>인터넷 연결을 끊으십시오</strong>. 이 도구는 브라우저에서 100% 로컬로 실행됩니다. 니모닉을 누구에게도 공유하지 마십시오.",
+                btn_generate: "새 지갑 생성",
+                mnemonic_label: "비밀 복구 구절 (12개 단어)",
+                address_label_native: "DIBI8 기본 주소 (dibi1...)",
+                address_label_eth: "ETH 호환 주소 (0x...)",
+                address_note: "💡 두 주소 형식 모두 동일한 니모닉에서 파생됩니다. 우리 풀은 마이닝 보상을 위해 두 형식을 모두 지원합니다.",
+                copy: "복사",
+                save_warning: "⚠️ 이 단어들을 순서대로 저장하십시오. 단어가 없으면 자금을 영원히 잃게 됩니다."
+            },
+            vi: {
+                back_to_dashboard: "← QUAY LẠI BẢNG ĐIỀU KHIỂN",
+                wallet_generator: "BỘ TẠO VÍ",
+                security_title: "GIAO THỨC BẢO MẬT TỐI THƯỢNG",
+                security_desc: "Để đảm bảo an toàn tối đa, vui lòng <strong>ngắt kết nối internet</strong> trước khi tạo. Công cụ này chạy 100% cục bộ trong trình duyệt của bạn. Không bao giờ chia sẻ cụm từ bí mật với bất kỳ ai.",
+                btn_generate: "TẠO VÍ MỚI",
+                mnemonic_label: "CỤM TỪ KHÔI PHỤC BÍ MẬT (12 TỪ)",
+                address_label_native: "ĐỊA CHỈ NATIVE DIBI8 (dibi1...)",
+                address_label_eth: "ĐỊA CHỈ TƯƠNG THÍCH ETH (0x...)",
+                address_note: "💡 Cả hai định dạng địa chỉ đều được bắt nguồn từ cùng một cụm từ bí mật. Bể đào của chúng tôi hỗ trợ cả hai để nhận phần thưởng khai thác.",
+                copy: "SAO CHÉP",
+                save_warning: "⚠️ LƯU CÁC TỪ NÀY THEO THỨ TỰ. KHÔNG CÓ CHÚNG, TÀI SẢN CỦA BẠN SẼ BỊ MẤT VĨNH VIỄN."
+            }
+        };
+
+        const currentLang = localStorage.getItem('dibi8_lang') || 'en';
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+            const key = el.getAttribute('data-i18n');
+            if (i18n[currentLang][key]) el.innerHTML = i18n[currentLang][key];
+        });
+    </script>
+</body>
+</html>
