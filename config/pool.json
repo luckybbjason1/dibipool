@@ -10,7 +10,7 @@
     "rpcUrl": "http://127.0.0.1:18332",
     "rpcUser": "dibi8rpc",
     "rpcPass": "rpcpassword",
-    "testWallet": "0xf147b4cd78a27edc7df78cd9fe98ac62774717b6",
+    "testWallet": "dibi1aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
     "backupUrls": []
   },
   "stats": {

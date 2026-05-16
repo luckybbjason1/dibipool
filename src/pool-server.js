@@ -91,6 +91,12 @@ const ipRates = new Map();
 const ipConnections = new Map();
 const ipAccepted = new Map();
 
+function isValidDibiAddress(address) {
+    if (typeof address !== 'string') return false;
+    const a = address.trim();
+    return /^dibi1[0-9a-f]{40}$/i.test(a);
+}
+
 function normalizeIp(ip) {
     if (!ip) return 'unknown';
     if (ip.startsWith('::ffff:')) return ip.slice(7);
@@ -300,6 +306,10 @@ io.on('connection', (socket) => {
             return socket.disconnect(true);
         }
         const { address, worker } = data;
+        if (!isValidDibiAddress(address)) {
+            socket.emit('auth_result', { success: false, message: 'Invalid Wallet Address' });
+            return socket.disconnect(true);
+        }
         socket.minerAddress = address || 'anonymous';
         socket.workerId = worker || 'ws_worker';
         socket.shareDifficulty = clampDifficulty(socket.shareDifficulty || 1);
@@ -312,6 +322,7 @@ io.on('connection', (socket) => {
         console.log(`[WS] 矿工认证: ${socket.minerAddress} (${socket.workerId})`);
         
         // 推送当前任务 (真实数据)
+        socket.emit('auth_result', { success: true });
         socket.emit('mining_job', {
             header: currentJob.header,
             difficulty: socket.shareDifficulty,
