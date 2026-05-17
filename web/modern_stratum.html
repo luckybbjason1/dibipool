@@ -329,7 +329,7 @@
                 <div class="endpoint-card">
                     <span class="endpoint-tag" data-i18n="asia_node">ASIA - HONG KONG</span>
                     <div class="endpoint-url">stratum+tcp://pool.dibi8.com:3333</div>
-                    <div style="font-size: 0.75rem; color: rgba(255,255,255,0.4);" data-i18n="port_low_diff">Port 3333: Default (CPU/GPU/ASIC)</div>
+                    <div style="font-size: 0.75rem; color: rgba(255,255,255,0.4);" data-i18n="port_low_diff">Port 3333: Default (CPU/ASIC)</div>
                 </div>
             </div>
 
@@ -381,20 +381,24 @@
                     <div>
                         <div class="os-badge os-linux">LINUX / HIVEOS</div>
                         <div style="font-size: 0.8rem; color: rgba(255,255,255,0.7); line-height: 1.6;">
-                            1. <span data-i18n="linux_step_1">Install a SHA256d Stratum miner (cpuminer/cgminer/bfgminer):</span> <br>
+                            1. <span data-i18n="linux_step_1">Build a SHA256d Stratum CPU miner (cpuminer-multi):</span> <br>
                             <div class="config-box" style="margin: 8px 0; padding: 10px; font-size: 0.75rem;">
-                                <button class="copy-btn" onclick="copyText('sudo apt update && sudo apt install -y cpuminer')">COPY</button>
-                                <code>sudo apt update && sudo apt install -y cpuminer</code>
+                                <button class="copy-btn" onclick="copyText('sudo apt update && sudo apt install -y git build-essential automake autoconf libcurl4-openssl-dev libjansson-dev libssl-dev')">COPY</button>
+                                <code>sudo apt update &amp;&amp; sudo apt install -y git build-essential ...</code>
+                            </div>
+                            <div class="config-box" style="margin: 8px 0; padding: 10px; font-size: 0.75rem;">
+                                <button class="copy-btn" onclick="copyText('git clone https://github.com/tpruvot/cpuminer-multi.git && cd cpuminer-multi && ./build.sh')">COPY</button>
+                                <code>git clone ... &amp;&amp; cd cpuminer-multi &amp;&amp; ./build.sh</code>
                             </div>
                             2. <span data-i18n="linux_step_2">Run in foreground:</span> <br>
                             <div class="config-box" style="margin: 8px 0; padding: 10px; font-size: 0.75rem;">
-                                <button class="copy-btn" onclick="copyText('cpuminer -a sha256d -o stratum+tcp://pool.dibi8.com:3333 -u dibi1e3846fe8d9f436c6c91f277fed0f069d607cc6d4.worker01 -p x')">COPY</button>
-                                <code>cpuminer -a sha256d -o stratum+tcp://pool.dibi8.com:3333 -u dibi1...worker01 -p x</code>
+                                <button class="copy-btn" onclick="copyText('cd cpuminer-multi && ./cpuminer -a sha256d -o stratum+tcp://pool.dibi8.com:3333 -u dibi1e3846fe8d9f436c6c91f277fed0f069d607cc6d4.worker01 -p x')">COPY</button>
+                                <code>cd cpuminer-multi &amp;&amp; ./cpuminer -a sha256d -o stratum+tcp://pool.dibi8.com:3333 -u dibi1...worker01 -p x</code>
                             </div>
                             3. <span data-i18n="linux_step_3">Run in background (nohup &amp;):</span> <br>
                             <div class="config-box" style="margin: 8px 0; padding: 10px; font-size: 0.75rem;">
-                                <button class="copy-btn" onclick="copyText('nohup cpuminer -a sha256d -o stratum+tcp://pool.dibi8.com:3333 -u dibi1e3846fe8d9f436c6c91f277fed0f069d607cc6d4.worker01 -p x > miner.log 2>&1 &')">COPY</button>
-                                <code>nohup cpuminer ... &gt; miner.log 2&gt;&amp;1 &amp;</code>
+                                <button class="copy-btn" onclick="copyText('cd cpuminer-multi && nohup ./cpuminer -a sha256d -o stratum+tcp://pool.dibi8.com:3333 -u dibi1e3846fe8d9f436c6c91f277fed0f069d607cc6d4.worker01 -p x > miner.log 2>&1 &')">COPY</button>
+                                <code>cd cpuminer-multi &amp;&amp; nohup ./cpuminer ... &gt; miner.log 2&gt;&amp;1 &amp;</code>
                             </div>
                         </div>
                     </div>
@@ -405,6 +409,7 @@
                     <ul style="font-size: 0.8rem; color: rgba(255,255,255,0.6); padding-left: 20px; line-height: 1.8;">
                         <li data-i18n="tip_wallet">Use your DIBI8 wallet address as the username.</li>
                         <li data-i18n="tip_worker">Append a worker name using a dot (e.g. .rig01).</li>
+                        <li data-i18n="tip_gpu">Most GPU miners do not support SHA256d; use ASIC or CPU for testing.</li>
                         <li data-i18n="tip_reconnect">Our Stratum V2 bridge supports 0ms reconnection.</li>
                     </ul>
                 </div>
@@ -527,7 +532,7 @@
                 connectivity: "CONNECTIVITY",
                 global_endpoints: "GLOBAL ENDPOINTS",
                 asia_node: "POOL - GLOBAL",
-                port_low_diff: "Port 3333: Default (CPU/GPU/ASIC)",
+                port_low_diff: "Port 3333: Default (CPU/ASIC)",
                 us_node: "USA - SILICON VALLEY",
                 port_high_diff: "Port 5555: High Difficulty (ASIC/Mining Rig)",
                 ssl_secure: "SSL / TLS SECURE",
@@ -541,12 +546,13 @@
                 win_step_1: "Download a SHA256d Stratum miner (CGMiner/BFGMiner) for Windows.",
                 win_step_2: "Create a mine.bat file in the folder.",
                 win_step_3: "Paste the generated config and run.",
-                linux_step_1: "Install a SHA256d Stratum miner (cpuminer/cgminer/bfgminer):",
+                linux_step_1: "Build a SHA256d Stratum CPU miner (cpuminer-multi):",
                 linux_step_2: "Run in foreground:",
                 linux_step_3: "Run in background (nohup &):",
                 quick_tips: "QUICK TIPS",
                 tip_wallet: "Use your DIBI8 wallet address as the username.",
                 tip_worker: "Append a worker name using a dot (e.g. .rig01).",
+                tip_gpu: "Most GPU miners do not support SHA256d; use ASIC or CPU for testing.",
                 tip_reconnect: "Our Stratum V2 bridge supports 0ms reconnection."
             },
             zh: {
@@ -554,7 +560,7 @@
                 connectivity: "连接指南",
                 global_endpoints: "全球节点",
                 asia_node: "矿池 - 全网",
-                port_low_diff: "端口 3333：默认 (CPU/GPU/ASIC)",
+                port_low_diff: "端口 3333：默认 (CPU/ASIC)",
                 us_node: "美国 - 硅谷",
                 port_high_diff: "端口 5555: 高难度 (ASIC/大型矿机)",
                 ssl_secure: "SSL / TLS 安全连接",
@@ -568,12 +574,13 @@
                 win_step_1: "下载支持 SHA256d 的 Stratum 矿工（CGMiner/BFGMiner）",
                 win_step_2: "在文件夹中创建一个 mine.bat 文件。",
                 win_step_3: "粘贴生成的配置并运行它。",
-                linux_step_1: "安装支持 SHA256d 的 Stratum 矿工（cpuminer/cgminer/bfgminer）：",
+                linux_step_1: "编译 SHA256d Stratum CPU 矿工（cpuminer-multi）：",
                 linux_step_2: "前台运行：",
                 linux_step_3: "后台运行（nohup &）：",
                 quick_tips: "快速提示",
                 tip_wallet: "使用您的 DIBI8 钱包地址作为用户名。",
                 tip_worker: "使用点号添加矿工名称 (例如 .rig01)。",
+                tip_gpu: "大多数 GPU 矿工不支持 SHA256d；建议用 ASIC，或用 CPU 做测试。",
                 tip_reconnect: "我们的 Stratum V2 桥接器支持 0ms 重连。"
             },
             ko: {
@@ -581,7 +588,7 @@
                 connectivity: "연결성",
                 global_endpoints: "글로벌 엔드포인트",
                 asia_node: "풀 - 글로벌",
-                port_low_diff: "포트 3333: 기본값 (CPU/GPU/ASIC)",
+                port_low_diff: "포트 3333: 기본값 (CPU/ASIC)",
                 us_node: "미국 - 실리콘 밸리",
                 port_high_diff: "포트 5555: 높은 난이도 (ASIC/채굴기)",
                 ssl_secure: "SSL / TLS 보안",
@@ -595,12 +602,13 @@
                 win_step_1: "Windows용 SHA256d Stratum 마이너(CGMiner/BFGMiner)를 다운로드하세요.",
                 win_step_2: "폴더에 mine.bat 파일을 만듭니다.",
                 win_step_3: "생성된 구성을 붙여넣고 실행합니다.",
-                linux_step_1: "SHA256d Stratum 마이너(cpuminer/cgminer/bfgminer)를 설치하세요:",
+                linux_step_1: "SHA256d Stratum CPU 마이너(cpuminer-multi)를 빌드하세요:",
                 linux_step_2: "포그라운드 실행:",
                 linux_step_3: "백그라운드 실행 (nohup &):",
                 quick_tips: "빠른 팁",
                 tip_wallet: "DIBI8 지갑 주소를 사용자 이름으로 사용하십시오.",
                 tip_worker: "점(.)을 사용하여 작업자 이름을 추가하십시오 (예: .rig01).",
+                tip_gpu: "대부분의 GPU 마이너는 SHA256d를 지원하지 않습니다. ASIC 또는 CPU로 테스트하세요.",
                 tip_reconnect: "우리의 Stratum V2 브리지는 0ms 재연결을 지원합니다."
             },
             vi: {
@@ -608,7 +616,7 @@
                 connectivity: "KẾT NỐI",
                 global_endpoints: "CÁC ĐIỂM CUỐI TOÀN CẦU",
                 asia_node: "POOL - TOÀN CẦU",
-                port_low_diff: "Cổng 3333: Mặc định (CPU/GPU/ASIC)",
+                port_low_diff: "Cổng 3333: Mặc định (CPU/ASIC)",
                 us_node: "HOA KỲ - THUNG LŨNG SILICON",
                 port_high_diff: "Cổng 5555: Độ khó cao (ASIC/Máy đào)",
                 ssl_secure: "BẢO MẬT SSL / TLS",
@@ -622,12 +630,13 @@
                 win_step_1: "Tải miner Stratum SHA256d (CGMiner/BFGMiner) cho Windows.",
                 win_step_2: "Tạo tệp mine.bat trong thư mục.",
                 win_step_3: "Dán cấu hình đã tạo và chạy nó.",
-                linux_step_1: "Cài miner Stratum SHA256d (cpuminer/cgminer/bfgminer):",
+                linux_step_1: "Build miner CPU Stratum SHA256d (cpuminer-multi):",
                 linux_step_2: "Chạy tiền cảnh:",
                 linux_step_3: "Chạy nền (nohup &):",
                 quick_tips: "MẸO NHANH",
                 tip_wallet: "Sử dụng địa chỉ ví DIBI8 của bạn làm tên người dùng.",
                 tip_worker: "Thêm tên thợ đào bằng dấu chấm (ví dụ: .rig01).",
+                tip_gpu: "Hầu hết miner GPU không hỗ trợ SHA256d; dùng ASIC hoặc CPU để thử nghiệm.",
                 tip_reconnect: "Cầu nối Stratum V2 của chúng tôi hỗ trợ kết nối lại 0ms."
             }
         };
