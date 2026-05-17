@@ -499,7 +499,7 @@ app.get('/modern-miner', (req, res) => res.sendFile(path.join(__dirname, '../web
 app.get('/modern-stratum', (req, res) => res.sendFile(path.join(__dirname, '../web/modern_stratum.html')));
 app.get('/modern-wallet', (req, res) => res.sendFile(path.join(__dirname, '../web/modern_wallet.html')));
 
-app.get('/', (req, res) => res.sendFile(path.join(__dirname, '../web/index.html')));
+app.get('/', (req, res) => res.redirect('/modern'));
 
 // ==================== 启动服务 ====================
 
