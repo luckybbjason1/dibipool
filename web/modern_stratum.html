@@ -340,16 +340,15 @@
                 <p style="font-size: 0.8rem; color: rgba(255,255,255,0.5); margin-bottom: 20px;" data-i18n="select_sw">Select your mining software to generate command line:</p>
                 
                 <div class="software-grid">
-                    <div class="sw-btn active" onclick="selectSW('gminer')">GMINER</div>
-                    <div class="sw-btn" onclick="selectSW('trex')">T-REX</div>
-                    <div class="sw-btn" onclick="selectSW('srb')">SRBMINER</div>
-                    <div class="sw-btn" onclick="selectSW('nbminer')">NBMINER</div>
+                    <div class="sw-btn active" onclick="selectSW('cgminer')">CGMINER</div>
+                    <div class="sw-btn" onclick="selectSW('bfgminer')">BFGMINER</div>
+                    <div class="sw-btn" onclick="selectSW('cpuminer')">CPUMINER</div>
                 </div>
 
                 <div class="config-box">
                     <button class="copy-btn" onclick="copyConfig()" data-i18n="copy">COPY</button>
                     <div id="configText">
-                        gminer.exe --algo dibi8 --server pool.dibi8.com:3333 --user dibi1e3846fe8d9f436c6c91f277fed0f069d607cc6d4.worker01
+                        cgminer -o stratum+tcp://pool.dibi8.com:3333 -u dibi1e3846fe8d9f436c6c91f277fed0f069d607cc6d4.worker01 -p x
                     </div>
                 </div>
 
@@ -372,7 +371,7 @@
                     <div style="margin-bottom: 25px;">
                         <div class="os-badge os-win">WINDOWS</div>
                         <div style="font-size: 0.8rem; color: rgba(255,255,255,0.7); line-height: 1.6;">
-                            1. <a href="https://github.com/develsoftware/GMinerRelease/releases" target="_blank" class="btn-primary" style="display: inline-block; padding: 4px 12px; border-radius: 6px; text-decoration: none; font-size: 0.7rem; margin: 0 5px;" data-i18n="dl_win">DOWNLOAD GMINER (WINDOWS)</a> <br>
+                            1. <span data-i18n="win_step_1">Download a SHA256d Stratum miner (CGMiner/BFGMiner) for Windows.</span> <br>
                             2. <span data-i18n="win_step_2">Create a <code>mine.bat</code> file in the folder.</span> <br>
                             3. <span data-i18n="win_step_3">Paste the generated config and run.</span>
                         </div>
@@ -382,25 +381,20 @@
                     <div>
                         <div class="os-badge os-linux">LINUX / HIVEOS</div>
                         <div style="font-size: 0.8rem; color: rgba(255,255,255,0.7); line-height: 1.6;">
-                            1. <span data-i18n="linux_step_1">Install dependencies & Download:</span> <br>
+                            1. <span data-i18n="linux_step_1">Install a SHA256d Stratum miner (cpuminer/cgminer/bfgminer):</span> <br>
                             <div class="config-box" style="margin: 8px 0; padding: 10px; font-size: 0.75rem;">
-                                <button class="copy-btn" onclick="copyText('sudo apt update && sudo apt install -y wget screen && wget https://github.com/develsoftware/GMinerRelease/releases/download/3.43/gminer_3_43_linux64.tar.xz')">COPY</button>
-                                <code>sudo apt update && sudo apt install ...</code>
+                                <button class="copy-btn" onclick="copyText('sudo apt update && sudo apt install -y cpuminer')">COPY</button>
+                                <code>sudo apt update && sudo apt install -y cpuminer</code>
                             </div>
-                            2. <span data-i18n="linux_step_2">Extract & Grant permission:</span> <br>
+                            2. <span data-i18n="linux_step_2">Run in foreground:</span> <br>
                             <div class="config-box" style="margin: 8px 0; padding: 10px; font-size: 0.75rem;">
-                                <button class="copy-btn" onclick="copyText('tar -xf gminer_3_43_linux64.tar.xz && chmod +x miner')">COPY</button>
-                                <code>tar -xf ... && chmod +x miner</code>
+                                <button class="copy-btn" onclick="copyText('cpuminer -a sha256d -o stratum+tcp://pool.dibi8.com:3333 -u dibi1e3846fe8d9f436c6c91f277fed0f069d607cc6d4.worker01 -p x')">COPY</button>
+                                <code>cpuminer -a sha256d -o stratum+tcp://pool.dibi8.com:3333 -u dibi1...worker01 -p x</code>
                             </div>
-                            3. <span data-i18n="linux_step_3">Run in foreground (+):</span> <br>
+                            3. <span data-i18n="linux_step_3">Run in background (nohup &amp;):</span> <br>
                             <div class="config-box" style="margin: 8px 0; padding: 10px; font-size: 0.75rem;">
-                                <button class="copy-btn" onclick="copyText('./miner --algo dibi8 --server pool.dibi8.com:3333 --user dibi1e3846fe8d9f436c6c91f277fed0f069d607cc6d4 +')">COPY</button>
-                                <code>./miner ... +</code>
-                            </div>
-                            4. <span data-i18n="linux_step_4">Run in background (nohup &amp;):</span> <br>
-                            <div class="config-box" style="margin: 8px 0; padding: 10px; font-size: 0.75rem;">
-                                <button class="copy-btn" onclick="copyText('nohup ./miner --algo dibi8 --server pool.dibi8.com:3333 --user dibi1e3846fe8d9f436c6c91f277fed0f069d607cc6d4 > miner.log 2>&1 &')">COPY</button>
-                                <code>nohup ./miner ... &gt; miner.log 2&gt;&amp;1 &amp;</code>
+                                <button class="copy-btn" onclick="copyText('nohup cpuminer -a sha256d -o stratum+tcp://pool.dibi8.com:3333 -u dibi1e3846fe8d9f436c6c91f277fed0f069d607cc6d4.worker01 -p x > miner.log 2>&1 &')">COPY</button>
+                                <code>nohup cpuminer ... &gt; miner.log 2&gt;&amp;1 &amp;</code>
                             </div>
                         </div>
                     </div>
@@ -502,10 +496,9 @@
 
         // 软件选择逻辑
         const configs = {
-            gminer: "gminer.exe --algo dibi8 --server pool.dibi8.com:3333 --user dibi1e3846fe8d9f436c6c91f277fed0f069d607cc6d4.worker01",
-            trex: "t-rex.exe -a dibi8 -o stratum+tcp://pool.dibi8.com:3333 -u dibi1e3846fe8d9f436c6c91f277fed0f069d607cc6d4 -p x",
-            srb: "SRBMiner-MULTI.exe --algorithm dibi8 --pool pool.dibi8.com:3333 --wallet dibi1e3846fe8d9f436c6c91f277fed0f069d607cc6d4",
-            nbminer: "nbminer.exe -a dibi8 -o stratum+tcp://pool.dibi8.com:3333 -u dibi1e3846fe8d9f436c6c91f277fed0f069d607cc6d4"
+            cgminer: "cgminer -o stratum+tcp://pool.dibi8.com:3333 -u dibi1e3846fe8d9f436c6c91f277fed0f069d607cc6d4.worker01 -p x",
+            bfgminer: "bfgminer -o stratum+tcp://pool.dibi8.com:3333 -u dibi1e3846fe8d9f436c6c91f277fed0f069d607cc6d4.worker01 -p x",
+            cpuminer: "cpuminer -a sha256d -o stratum+tcp://pool.dibi8.com:3333 -u dibi1e3846fe8d9f436c6c91f277fed0f069d607cc6d4.worker01 -p x"
         };
 
         function selectSW(sw) {
@@ -545,14 +538,12 @@
                 data_unified_title: "Unified Data Dashboard",
                 data_unified_desc: "All mining data (Stratum & Web Miner) under the same wallet address is aggregated. You can monitor your global hashrate in real-time on the Dashboard.",
                 how_to_start: "HOW TO START",
-                dl_win: "DOWNLOAD GMINER (WINDOWS)",
-                dl_linux: "DOWNLOAD GMINER (LINUX)",
+                win_step_1: "Download a SHA256d Stratum miner (CGMiner/BFGMiner) for Windows.",
                 win_step_2: "Create a mine.bat file in the folder.",
                 win_step_3: "Paste the generated config and run.",
-                linux_step_1: "Install dependencies & Download:",
-                linux_step_2: "Extract & Grant permission:",
-                linux_step_3: "Run in foreground (+):",
-                linux_step_4: "Run in background (nohup &):",
+                linux_step_1: "Install a SHA256d Stratum miner (cpuminer/cgminer/bfgminer):",
+                linux_step_2: "Run in foreground:",
+                linux_step_3: "Run in background (nohup &):",
                 quick_tips: "QUICK TIPS",
                 tip_wallet: "Use your DIBI8 wallet address as the username.",
                 tip_worker: "Append a worker name using a dot (e.g. .rig01).",
@@ -574,14 +565,12 @@
                 data_unified_title: "统一数据看板",
                 data_unified_desc: "同一钱包地址下的所有挖矿数据（Stratum 矿机与网页挖矿）将自动汇总。您可以在仪表盘实时监控您的全球总算力。",
                 how_to_start: "如何开始",
-                dl_win: "下载 GMINER (WINDOWS)",
-                dl_linux: "下载 GMINER (LINUX)",
+                win_step_1: "下载支持 SHA256d 的 Stratum 矿工（CGMiner/BFGMiner）",
                 win_step_2: "在文件夹中创建一个 mine.bat 文件。",
                 win_step_3: "粘贴生成的配置并运行它。",
-                linux_step_1: "安装依赖并下载：",
-                linux_step_2: "解压并赋予权限：",
-                linux_step_3: "前台运行（命令末尾 +）：",
-                linux_step_4: "后台运行（nohup &）：",
+                linux_step_1: "安装支持 SHA256d 的 Stratum 矿工（cpuminer/cgminer/bfgminer）：",
+                linux_step_2: "前台运行：",
+                linux_step_3: "后台运行（nohup &）：",
                 quick_tips: "快速提示",
                 tip_wallet: "使用您的 DIBI8 钱包地址作为用户名。",
                 tip_worker: "使用点号添加矿工名称 (例如 .rig01)。",
@@ -603,14 +592,12 @@
                 data_unified_title: "통합 데이터 대시보드",
                 data_unified_desc: "동일한 지갑 주소 아래의 모든 마이닝 데이터(Stratum 및 웹 마이너)가 통합됩니다. 대시보드에서 실시간으로 글로벌 해시레이트를 모니터링할 수 있습니다.",
                 how_to_start: "시작하는 방법",
-                dl_win: "GMINER 다운로드 (WINDOWS)",
-                dl_linux: "GMINER 다운로드 (LINUX)",
+                win_step_1: "Windows용 SHA256d Stratum 마이너(CGMiner/BFGMiner)를 다운로드하세요.",
                 win_step_2: "폴더에 mine.bat 파일을 만듭니다.",
                 win_step_3: "생성된 구성을 붙여넣고 실행합니다.",
-                linux_step_1: "종속성 설치 및 다운로드:",
-                linux_step_2: "압축 해제 및 권한 부여:",
-                linux_step_3: "포그라운드 실행 (+):",
-                linux_step_4: "백그라운드 실행 (nohup &):",
+                linux_step_1: "SHA256d Stratum 마이너(cpuminer/cgminer/bfgminer)를 설치하세요:",
+                linux_step_2: "포그라운드 실행:",
+                linux_step_3: "백그라운드 실행 (nohup &):",
                 quick_tips: "빠른 팁",
                 tip_wallet: "DIBI8 지갑 주소를 사용자 이름으로 사용하십시오.",
                 tip_worker: "점(.)을 사용하여 작업자 이름을 추가하십시오 (예: .rig01).",
@@ -632,14 +619,12 @@
                 data_unified_title: "Bảng điều khiển dữ liệu thống nhất",
                 data_unified_desc: "Tất cả dữ liệu khai thác (Stratum & Web Miner) dưới cùng một địa chỉ ví đều được tổng hợp. Bạn có thể theo dõi tốc độ băm toàn cầu của mình trong thời gian thực trên Bảng điều khiển.",
                 how_to_start: "LÀM THẾ NÀO ĐỂ BẮT ĐẦU",
-                dl_win: "TẢI XUỐNG GMINER (WINDOWS)",
-                dl_linux: "TẢI XUỐNG GMINER (LINUX)",
+                win_step_1: "Tải miner Stratum SHA256d (CGMiner/BFGMiner) cho Windows.",
                 win_step_2: "Tạo tệp mine.bat trong thư mục.",
                 win_step_3: "Dán cấu hình đã tạo và chạy nó.",
-                linux_step_1: "Cài đặt phụ thuộc & Tải xuống:",
-                linux_step_2: "Giải nén & Cấp quyền:",
-                linux_step_3: "Chạy tiền cảnh (+):",
-                linux_step_4: "Chạy nền (nohup &):",
+                linux_step_1: "Cài miner Stratum SHA256d (cpuminer/cgminer/bfgminer):",
+                linux_step_2: "Chạy tiền cảnh:",
+                linux_step_3: "Chạy nền (nohup &):",
                 quick_tips: "MẸO NHANH",
                 tip_wallet: "Sử dụng địa chỉ ví DIBI8 của bạn làm tên người dùng.",
                 tip_worker: "Thêm tên thợ đào bằng dấu chấm (ví dụ: .rig01).",
