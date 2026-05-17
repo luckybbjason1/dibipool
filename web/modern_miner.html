@@ -700,7 +700,7 @@
                 system_logs: "SYSTEM LOGS",
                 sys_ready: "System ready. Waiting for user initialization...",
                 err_no_address: "ERROR: Wallet address is mandatory.",
-                err_bad_address: "ERROR: Only dibi1... wallet addresses are allowed.",
+                err_bad_address: "ERROR: Invalid dibi1 address format.",
                 initializing: "INITIALIZING: Authenticating",
                 new_job: "NEW JOB: Received task header",
                 success_block: "SUCCESS: Block found and broadcasted!",
@@ -738,7 +738,7 @@
                 system_logs: "系统日志",
                 sys_ready: "系统就绪。等待用户初始化...",
                 err_no_address: "错误：钱包地址是必填项。",
-                err_bad_address: "错误：仅允许使用 dibi1... 开头的钱包地址。",
+                err_bad_address: "错误：dibi1 地址格式不正确。",
                 initializing: "初始化中：正在认证",
                 new_job: "新任务：已收到任务头",
                 success_block: "成功：区块已找到并广播！",
@@ -776,7 +776,7 @@
                 system_logs: "시스템 로그",
                 sys_ready: "시스템이 준비되었습니다. 사용자 초기화를 기다리는 중...",
                 err_no_address: "오류: 지갑 주소는 필수입니다.",
-                err_bad_address: "오류: dibi1... 지갑 주소만 허용됩니다.",
+                err_bad_address: "오류: dibi1 주소 형식이 올바르지 않습니다.",
                 initializing: "초기화 중: 인증 중",
                 new_job: "새 작업: 작업 헤더를 받았습니다",
                 success_block: "성공: 블록을 찾아서 브로드캐스트했습니다!",
@@ -814,7 +814,7 @@
                 system_logs: "NHẬT KÝ HỆ THỐNG",
                 sys_ready: "Hệ thống đã sẵn sàng. Đang chờ khởi tạo từ người dùng...",
                 err_no_address: "LỖI: Địa chỉ ví là bắt buộc.",
-                err_bad_address: "LỖI: Chỉ chấp nhận địa chỉ ví bắt đầu bằng dibi1...",
+                err_bad_address: "LỖI: Định dạng địa chỉ dibi1 không hợp lệ.",
                 initializing: "ĐANG KHỞI TẠO: Đang xác thực",
                 new_job: "NHIỆM VỤ MỚI: Đã nhận được tiêu đề tác vụ",
                 success_block: "THÀNH CÔNG: Đã tìm thấy khối và phát sóng!",
@@ -895,6 +895,7 @@
         function isValidDibiAddressClient(address) {
             if (typeof address !== 'string') return false;
             const a = address.trim().toLowerCase();
+            if (/^dibi1[0-9a-f]{40}$/.test(a)) return true;
             if (!a.startsWith('dibi1')) return false;
             const body = a.slice(5);
             if (!body) return false;

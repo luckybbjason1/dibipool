@@ -122,6 +122,7 @@ const ipAccepted = new Map();
 function isValidDibiAddress(address) {
     if (typeof address !== 'string') return false;
     const a = address.trim().toLowerCase();
+    if (/^dibi1[0-9a-f]{40}$/.test(a)) return true;
     if (!a.startsWith('dibi1')) return false;
     const body = a.slice(5);
     if (!body) return false;
