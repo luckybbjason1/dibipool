@@ -328,20 +328,8 @@
                 
                 <div class="endpoint-card">
                     <span class="endpoint-tag" data-i18n="asia_node">ASIA - HONG KONG</span>
-                    <div class="endpoint-url">stratum+tcp://hk.dibi8.com:4444</div>
-                    <div style="font-size: 0.75rem; color: rgba(255,255,255,0.4);" data-i18n="port_low_diff">Port 4444: Low Difficulty (CPU/Low-end GPU)</div>
-                </div>
-
-                <div class="endpoint-card">
-                    <span class="endpoint-tag" data-i18n="us_node">USA - SILICON VALLEY</span>
-                    <div class="endpoint-url">stratum+tcp://us.dibi8.com:5555</div>
-                    <div style="font-size: 0.75rem; color: rgba(255,255,255,0.4);" data-i18n="port_high_diff">Port 5555: High Difficulty (ASIC/Mining Rig)</div>
-                </div>
-
-                <div class="endpoint-card" style="border-left: 3px solid var(--accent-green);">
-                    <span class="endpoint-tag" style="color: var(--accent-green); background: rgba(0,255,170,0.1);" data-i18n="ssl_secure">SSL / TLS SECURE</span>
-                    <div class="endpoint-url">stratum+ssl://pool.dibi8.com:8888</div>
-                    <div style="font-size: 0.75rem; color: rgba(255,255,255,0.4);" data-i18n="encrypted_comm">Encrypted communication for maximum security</div>
+                    <div class="endpoint-url">stratum+tcp://pool.dibi8.com:3333</div>
+                    <div style="font-size: 0.75rem; color: rgba(255,255,255,0.4);" data-i18n="port_low_diff">Port 3333: Default (CPU/GPU/ASIC)</div>
                 </div>
             </div>
 
@@ -361,7 +349,7 @@
                 <div class="config-box">
                     <button class="copy-btn" onclick="copyConfig()" data-i18n="copy">COPY</button>
                     <div id="configText">
-                        gminer.exe --algo dibi8 --server hk.dibi8.com:4444 --user dibi1e3846fe8d9f436c6c91f277fed0f069d607cc6d4.worker01
+                        gminer.exe --algo dibi8 --server pool.dibi8.com:3333 --user dibi1e3846fe8d9f436c6c91f277fed0f069d607cc6d4.worker01
                     </div>
                 </div>
 
@@ -406,7 +394,7 @@
                             </div>
                             3. <span data-i18n="linux_step_3">Run in background (Screen):</span> <br>
                             <div class="config-box" style="margin: 8px 0; padding: 10px; font-size: 0.75rem;">
-                                <button class="copy-btn" onclick="copyText('screen -S dibi_mining ./miner --algo dibi8 --server pool.dibi8.com:4444 --user dibi1e3846fe8d9f436c6c91f277fed0f069d607cc6d4')">COPY</button>
+                                <button class="copy-btn" onclick="copyText('screen -S dibi_mining ./miner --algo dibi8 --server pool.dibi8.com:3333 --user dibi1e3846fe8d9f436c6c91f277fed0f069d607cc6d4')">COPY</button>
                                 <code>screen -S dibi_mining ./miner ...</code>
                             </div>
                         </div>
@@ -509,10 +497,10 @@
 
         // 软件选择逻辑
         const configs = {
-            gminer: "gminer.exe --algo dibi8 --server hk.dibi8.com:4444 --user dibi1e3846fe8d9f436c6c91f277fed0f069d607cc6d4.worker01",
-            trex: "t-rex.exe -a dibi8 -o stratum+tcp://hk.dibi8.com:4444 -u dibi1e3846fe8d9f436c6c91f277fed0f069d607cc6d4 -p x",
-            srb: "SRBMiner-MULTI.exe --algorithm dibi8 --pool hk.dibi8.com:4444 --wallet dibi1e3846fe8d9f436c6c91f277fed0f069d607cc6d4",
-            nbminer: "nbminer.exe -a dibi8 -o stratum+tcp://hk.dibi8.com:4444 -u dibi1e3846fe8d9f436c6c91f277fed0f069d607cc6d4"
+            gminer: "gminer.exe --algo dibi8 --server pool.dibi8.com:3333 --user dibi1e3846fe8d9f436c6c91f277fed0f069d607cc6d4.worker01",
+            trex: "t-rex.exe -a dibi8 -o stratum+tcp://pool.dibi8.com:3333 -u dibi1e3846fe8d9f436c6c91f277fed0f069d607cc6d4 -p x",
+            srb: "SRBMiner-MULTI.exe --algorithm dibi8 --pool pool.dibi8.com:3333 --wallet dibi1e3846fe8d9f436c6c91f277fed0f069d607cc6d4",
+            nbminer: "nbminer.exe -a dibi8 -o stratum+tcp://pool.dibi8.com:3333 -u dibi1e3846fe8d9f436c6c91f277fed0f069d607cc6d4"
         };
 
         function selectSW(sw) {
@@ -540,8 +528,8 @@
                 back_to_dashboard: "← BACK TO DASHBOARD",
                 connectivity: "CONNECTIVITY",
                 global_endpoints: "GLOBAL ENDPOINTS",
-                asia_node: "ASIA - HONG KONG",
-                port_low_diff: "Port 4444: Low Difficulty (CPU/Low-end GPU)",
+                asia_node: "POOL - GLOBAL",
+                port_low_diff: "Port 3333: Default (CPU/GPU/ASIC)",
                 us_node: "USA - SILICON VALLEY",
                 port_high_diff: "Port 5555: High Difficulty (ASIC/Mining Rig)",
                 ssl_secure: "SSL / TLS SECURE",
@@ -568,8 +556,8 @@
                 back_to_dashboard: "← 返回仪表盘",
                 connectivity: "连接指南",
                 global_endpoints: "全球节点",
-                asia_node: "亚洲 - 香港",
-                port_low_diff: "端口 4444: 低难度 (CPU/低端显卡)",
+                asia_node: "矿池 - 全网",
+                port_low_diff: "端口 3333：默认 (CPU/GPU/ASIC)",
                 us_node: "美国 - 硅谷",
                 port_high_diff: "端口 5555: 高难度 (ASIC/大型矿机)",
                 ssl_secure: "SSL / TLS 安全连接",
@@ -596,8 +584,8 @@
                 back_to_dashboard: "← 대시보드로 돌아가기",
                 connectivity: "연결성",
                 global_endpoints: "글로벌 엔드포인트",
-                asia_node: "아시아 - 홍콩",
-                port_low_diff: "포트 4444: 낮은 난이도 (CPU/저사양 GPU)",
+                asia_node: "풀 - 글로벌",
+                port_low_diff: "포트 3333: 기본값 (CPU/GPU/ASIC)",
                 us_node: "미국 - 실리콘 밸리",
                 port_high_diff: "포트 5555: 높은 난이도 (ASIC/채굴기)",
                 ssl_secure: "SSL / TLS 보안",
@@ -624,8 +612,8 @@
                 back_to_dashboard: "← QUAY LẠI BẢNG ĐIỀU KHIỂN",
                 connectivity: "KẾT NỐI",
                 global_endpoints: "CÁC ĐIỂM CUỐI TOÀN CẦU",
-                asia_node: "CHÂU Á - HỒNG KÔNG",
-                port_low_diff: "Cổng 4444: Độ khó thấp (CPU/GPU cấu hình thấp)",
+                asia_node: "POOL - TOÀN CẦU",
+                port_low_diff: "Cổng 3333: Mặc định (CPU/GPU/ASIC)",
                 us_node: "HOA KỲ - THUNG LŨNG SILICON",
                 port_high_diff: "Cổng 5555: Độ khó cao (ASIC/Máy đào)",
                 ssl_secure: "BẢO MẬT SSL / TLS",
