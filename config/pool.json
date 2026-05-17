@@ -1,15 +1,43 @@
 {
+  "chain": {
+    "name": "DIBI8coin",
+    "symbol": "DIBI8",
+    "maxSupply": 21000000,
+    "pow": {
+      "algo": "sha256d"
+    },
+    "address": {
+      "prefix": "dibi1"
+    }
+  },
   "pool": {
     "name": "DIBI8coin 官方矿池",
     "port": 4000,
     "fee": 1,
-    "rewardPerBlock": 100
+    "rewardPerBlock": 100,
+    "shareTarget": "0000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
   },
   "node": {
     "apiUrl": "https://dibi8.com/api",
     "rpcUrl": "http://127.0.0.1:8332",
     "rpcUser": "",
     "rpcPass": "",
+    "cookieCandidates": [
+      "~/.dibi8/.cookie",
+      "/root/.dibi8/.cookie",
+      "/var/lib/dibi8/.dibi8/.cookie",
+      "/var/lib/dibi8d/.dibi8/.cookie"
+    ],
+    "rpcMethods": {
+      "getBlockTemplate": "getblocktemplate",
+      "getBlockCount": "getblockcount",
+      "getNetworkHashPS": "getnetworkhashps",
+      "getMiningInfo": "getmininginfo",
+      "sendToAddress": "sendtoaddress"
+    },
+    "gbtParams": [
+      {}
+    ],
     "testWallet": "dibi1e3846fe8d9f436c6c91f277fed0f069d607cc6d4",
     "backupUrls": []
   },

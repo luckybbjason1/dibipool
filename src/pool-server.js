@@ -53,10 +53,13 @@ const stats = new PoolStats(config.stats);
 class NodeRPC {
     constructor(nodeConfig) {
         this.url = nodeConfig.rpcUrl;
+        this.rpcMethods = nodeConfig.rpcMethods || {};
+        this.gbtParams = Array.isArray(nodeConfig.gbtParams) ? nodeConfig.gbtParams : null;
         this.userpass = {
             username: nodeConfig.rpcUser,
             password: nodeConfig.rpcPass
         };
+        this.cookieCandidates = Array.isArray(nodeConfig.cookieCandidates) ? nodeConfig.cookieCandidates : null;
         this.cookiePathUsed = null;
         this.authMode = (this.userpass.username && this.userpass.password) ? 'userpass' : 'cookie';
         this.cookieMtimeMs = 0;
@@ -76,27 +79,28 @@ class NodeRPC {
     getDefaultCookieCandidates() {
         const out = [];
         const home = process.env.HOME || '';
-        if (home) {
-            out.push(path.join(home, '.bitcoin', '.cookie'));
-            out.push(path.join(home, '.bitcoin', 'testnet3', '.cookie'));
-            out.push(path.join(home, '.bitcoin', 'regtest', '.cookie'));
-        }
-        out.push('/var/lib/bitcoind/.bitcoin/.cookie');
-        out.push('/var/lib/bitcoind/.bitcoin/testnet3/.cookie');
-        out.push('/var/lib/bitcoind/.bitcoin/regtest/.cookie');
-        out.push('/var/lib/bitcoin/.bitcoin/.cookie');
-        out.push('/var/lib/bitcoin/.bitcoin/testnet3/.cookie');
-        out.push('/var/lib/bitcoin/.bitcoin/regtest/.cookie');
-        out.push('/root/.bitcoin/.cookie');
-        out.push('/root/.bitcoin/testnet3/.cookie');
-        out.push('/root/.bitcoin/regtest/.cookie');
+        if (home) out.push(path.join(home, '.dibi8', '.cookie'));
+        out.push('/root/.dibi8/.cookie');
+        out.push('/var/lib/dibi8/.dibi8/.cookie');
+        out.push('/var/lib/dibi8d/.dibi8/.cookie');
         return out;
     }
 
     refreshCookieAuth() {
         if (this.authMode === 'userpass') return true;
         const configured = process.env.DIBI8_RPC_COOKIE_FILE;
-        const candidates = configured ? [configured] : this.getDefaultCookieCandidates();
+        const candidates = configured
+            ? [configured]
+            : (this.cookieCandidates && this.cookieCandidates.length)
+                ? this.cookieCandidates.map(p => {
+                    if (typeof p !== 'string') return '';
+                    if (p.startsWith('~/')) {
+                        const home = process.env.HOME || '';
+                        return home ? path.join(home, p.slice(2)) : p;
+                    }
+                    return p;
+                })
+                : this.getDefaultCookieCandidates();
         for (const p of candidates) {
             try {
                 if (!p || !fs.existsSync(p)) continue;
@@ -291,7 +295,7 @@ let currentJob = {
     header: crypto.randomBytes(32).toString('hex'),
     height: 0,
     // 矿池份额难度 (比全网难度低，用于统计贡献)
-    shareTarget: "0000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+    shareTarget: (config.pool && config.pool.shareTarget) || "0000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
     difficulty: 1
 };
 
@@ -323,10 +327,17 @@ function verifyShare(header, nonce, target) {
  * 刷新挖矿任务 (Poll 模式)
  */
 async function refreshJob() {
-    const template = await rpc.call('getblocktemplate', [{ rules: ['segwit'] }]);
-    const blockCount = await rpc.call('getblockcount', []);
-    const netHash = await rpc.call('getnetworkhashps', []);
-    const miningInfo = await rpc.call('getmininginfo', []);
+    const methods = rpc.rpcMethods || {};
+    const mGetBlockTemplate = methods.getBlockTemplate || 'getblocktemplate';
+    const mGetBlockCount = methods.getBlockCount || 'getblockcount';
+    const mGetNetworkHashPS = methods.getNetworkHashPS || 'getnetworkhashps';
+    const mGetMiningInfo = methods.getMiningInfo || 'getmininginfo';
+    const gbtParams = (rpc.gbtParams && rpc.gbtParams.length) ? rpc.gbtParams : [{}];
+
+    const template = await rpc.call(mGetBlockTemplate, gbtParams);
+    const blockCount = await rpc.call(mGetBlockCount, []);
+    const netHash = await rpc.call(mGetNetworkHashPS, []);
+    const miningInfo = await rpc.call(mGetMiningInfo, []);
     
     if (template) {
         const newHeader = crypto.createHash('sha256').update(template.previousblockhash + template.curtime).digest('hex');
@@ -339,7 +350,7 @@ async function refreshJob() {
                 header: newHeader,
                 height: template.height,
                 target: template.target,
-                shareTarget: "0000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", // 矿池接受的最低难度
+                shareTarget: (config.pool && config.pool.shareTarget) || "0000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
                 difficulty: 1,
                 template: template
             };
@@ -633,6 +644,8 @@ async function processPayouts() {
     if (payoutRunning) return;
     payoutRunning = true;
     try {
+        const methods = rpc.rpcMethods || {};
+        const mSendToAddress = methods.sendToAddress || 'sendtoaddress';
         const candidates = stats.listMinersForPayout({ minBalance: minPayout, maxCount: maxPayoutsPerRun });
         for (const c of candidates) {
             if (!c || !isValidDibiAddress(c.address)) continue;
@@ -643,7 +656,7 @@ async function processPayouts() {
             if (minPayout > 0 && amt < minPayout) continue;
             const sendAmt = roundAmount8(amt);
             if (sendAmt <= 0) continue;
-            const txid = await rpc.call('sendtoaddress', [c.address, sendAmt]);
+            const txid = await rpc.call(mSendToAddress, [c.address, sendAmt]);
             if (typeof txid === 'string' && txid.trim()) {
                 stats.applyPayout({ address: c.address, amount: sendAmt, txid: txid.trim(), timestamp: Date.now() });
             }
