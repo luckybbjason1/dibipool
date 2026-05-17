@@ -835,11 +835,35 @@
             }
         };
 
-        let currentLang = localStorage.getItem('dibi8_lang') || 'en';
+        const storage = (() => {
+            try {
+                const k = '__dibi8_test__';
+                localStorage.setItem(k, '1');
+                localStorage.removeItem(k);
+                return localStorage;
+            } catch (e) {
+                const mem = new Map();
+                return {
+                    getItem: (key) => mem.has(key) ? mem.get(key) : null,
+                    setItem: (key, value) => mem.set(key, String(value)),
+                    removeItem: (key) => mem.delete(key)
+                };
+            }
+        })();
+
+        function storageGet(key) {
+            return storage.getItem(key);
+        }
+
+        function storageSet(key, value) {
+            storage.setItem(key, value);
+        }
+
+        let currentLang = storageGet('dibi8_lang') || 'en';
 
         function setLang(lang) {
             currentLang = lang;
-            localStorage.setItem('dibi8_lang', lang);
+            storageSet('dibi8_lang', lang);
             updateUI();
         }
 
@@ -869,11 +893,11 @@
         let pendingStart = false;
 
         function hasConsent() {
-            return localStorage.getItem(consentKey) === 'true';
+            return storageGet(consentKey) === 'true';
         }
 
         function setConsent(val) {
-            localStorage.setItem(consentKey, val ? 'true' : 'false');
+            storageSet(consentKey, val ? 'true' : 'false');
         }
 
         function getPowerMax() {
@@ -905,7 +929,7 @@
             const check = document.getElementById('consentCheck');
             const agree = document.getElementById('consentAgree');
             check.checked = false;
-            agree.disabled = true;
+            agree.disabled = !check.checked;
             modal.classList.remove('hidden');
         }
 
@@ -930,8 +954,24 @@
             if (shouldStart) startMining();
         }
 
-        document.getElementById('consentCheck').addEventListener('change', (e) => {
-            document.getElementById('consentAgree').disabled = !e.target.checked;
+        document.addEventListener('change', (e) => {
+            const target = e && e.target;
+            if (!target || target.id !== 'consentCheck') return;
+            const agree = document.getElementById('consentAgree');
+            if (agree) agree.disabled = !target.checked;
+        });
+
+        const consentModalEl = document.getElementById('consentModal');
+        if (consentModalEl) {
+            consentModalEl.addEventListener('click', (e) => {
+                if (e && e.target === consentModalEl) cancelConsent();
+            });
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (!e || e.key !== 'Escape') return;
+            const modal = document.getElementById('consentModal');
+            if (modal && !modal.classList.contains('hidden')) cancelConsent();
         });
 
         document.getElementById('powerSlider').addEventListener('input', () => {
@@ -944,11 +984,11 @@
                 log('', 'info', 'consent_required');
                 return;
             }
-            localStorage.setItem('dibi8_power', slider.value);
+            storageSet('dibi8_power', slider.value);
             syncPowerUI();
         });
 
-        const savedPower = parseInt(localStorage.getItem('dibi8_power') || '60', 10);
+        const savedPower = parseInt(storageGet('dibi8_power') || '60', 10);
         document.getElementById('powerSlider').value = String(Number.isFinite(savedPower) ? savedPower : 60);
         syncPowerUI();
 
