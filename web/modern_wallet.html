@@ -417,7 +417,37 @@
             }
         };
 
-        const currentLang = localStorage.getItem('dibi8_lang') || 'en';
+        function detectBrowserLang() {
+            const langs = (navigator.languages && navigator.languages.length)
+                ? navigator.languages
+                : [navigator.language || navigator.userLanguage || 'en'];
+            const first = String(langs[0] || 'en').toLowerCase();
+            if (first.startsWith('zh')) return 'zh';
+            if (first.startsWith('ko')) return 'ko';
+            if (first.startsWith('vi')) return 'vi';
+            return 'en';
+        }
+
+        function safeGetLang() {
+            try {
+                return localStorage.getItem('dibi8_lang');
+            } catch (e) {
+                return null;
+            }
+        }
+
+        function safeSetLang(lang) {
+            try {
+                localStorage.setItem('dibi8_lang', lang);
+            } catch (e) {}
+        }
+
+        const storedLang = safeGetLang();
+        const currentLang = (storedLang === 'en' || storedLang === 'zh' || storedLang === 'ko' || storedLang === 'vi')
+            ? storedLang
+            : detectBrowserLang();
+        if (!storedLang) safeSetLang(currentLang);
+        document.documentElement.lang = currentLang;
         document.querySelectorAll('[data-i18n]').forEach(el => {
             const key = el.getAttribute('data-i18n');
             if (i18n[currentLang][key]) el.innerHTML = i18n[currentLang][key];
