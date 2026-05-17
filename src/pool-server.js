@@ -370,6 +370,7 @@ async function refreshJob() {
 
 // 每 10 秒刷新一次任务
 setInterval(refreshJob, 10000);
+refreshJob().catch(() => {});
 
 // ==================== 核心逻辑 ====================
 
