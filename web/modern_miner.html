@@ -892,6 +892,16 @@
         const consentKey = 'dibi8_power_consent';
         let pendingStart = false;
 
+        function isValidDibiAddressClient(address) {
+            if (typeof address !== 'string') return false;
+            const a = address.trim().toLowerCase();
+            if (!a.startsWith('dibi1')) return false;
+            const body = a.slice(5);
+            if (!body) return false;
+            if (body.length < 20 || body.length > 120) return false;
+            return /^[qpzry9x8gf2tvdw0s3jn54khce6mua7l]+$/.test(body);
+        }
+
         function hasConsent() {
             return storageGet(consentKey) === 'true';
         }
@@ -1050,7 +1060,7 @@
                 log('', 'error', 'err_no_address');
                 return;
             }
-            if (!/^dibi1[0-9a-f]{40}$/i.test(address.trim())) {
+            if (!isValidDibiAddressClient(address)) {
                 log('', 'error', 'err_bad_address');
                 return;
             }

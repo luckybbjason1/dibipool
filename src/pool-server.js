@@ -121,8 +121,12 @@ const ipAccepted = new Map();
 
 function isValidDibiAddress(address) {
     if (typeof address !== 'string') return false;
-    const a = address.trim();
-    return /^dibi1[0-9a-f]{40}$/i.test(a);
+    const a = address.trim().toLowerCase();
+    if (!a.startsWith('dibi1')) return false;
+    const body = a.slice(5);
+    if (!body) return false;
+    if (body.length < 20 || body.length > 120) return false;
+    return /^[qpzry9x8gf2tvdw0s3jn54khce6mua7l]+$/.test(body);
 }
 
 function normalizeIp(ip) {
@@ -335,7 +339,7 @@ io.on('connection', (socket) => {
         }
         const { address, worker } = data;
         if (!isValidDibiAddress(address)) {
-            socket.emit('auth_result', { success: false, message: 'Invalid Wallet Address' });
+            socket.emit('auth_result', { success: false, message: 'Invalid Wallet Address (dibi1...)' });
             return socket.disconnect(true);
         }
         socket.minerAddress = address || 'anonymous';
