@@ -8,8 +8,8 @@
   "node": {
     "apiUrl": "https://dibi8.com/api",
     "rpcUrl": "http://127.0.0.1:18332",
-    "rpcUser": "dibi8rpc",
-    "rpcPass": "rpcpassword",
+    "rpcUser": "",
+    "rpcPass": "",
     "testWallet": "dibi1aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
     "backupUrls": []
   },

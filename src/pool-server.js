@@ -12,9 +12,28 @@ const fs = require('fs');
 const crypto = require('crypto');
 const PoolStats = require('./stats.js');
 
-// 加载配置
 const configPath = path.join(__dirname, '../config/pool.json');
-const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+const configLocalPath = path.join(__dirname, '../config/pool.local.json');
+
+function isPlainObject(value) {
+    return !!value && typeof value === 'object' && !Array.isArray(value);
+}
+
+function mergeDeep(base, override) {
+    if (!isPlainObject(base) || !isPlainObject(override)) return override;
+    const out = { ...base };
+    for (const [k, v] of Object.entries(override)) {
+        if (isPlainObject(v) && isPlainObject(out[k])) out[k] = mergeDeep(out[k], v);
+        else out[k] = v;
+    }
+    return out;
+}
+
+let config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+if (fs.existsSync(configLocalPath)) {
+    const localCfg = JSON.parse(fs.readFileSync(configLocalPath, 'utf8'));
+    config = mergeDeep(config, localCfg);
+}
 
 const app = express();
 const server = http.createServer(app);
@@ -66,9 +85,18 @@ class NodeRPC {
     }
 }
 
-const rpc = new NodeRPC(config.node);
+const nodeConfig = config.node || {};
+const nodeRuntimeConfig = {
+    ...nodeConfig,
+    apiUrl: process.env.DIBI8_API_URL || nodeConfig.apiUrl,
+    rpcUrl: process.env.DIBI8_RPC_URL || nodeConfig.rpcUrl,
+    rpcUser: process.env.DIBI8_RPC_USER || nodeConfig.rpcUser,
+    rpcPass: process.env.DIBI8_RPC_PASS || nodeConfig.rpcPass
+};
+
+const rpc = new NodeRPC(nodeRuntimeConfig);
 const nodeApi = axios.create({
-    baseURL: config.node.apiUrl,
+    baseURL: nodeRuntimeConfig.apiUrl,
     timeout: 10000
 });
 
