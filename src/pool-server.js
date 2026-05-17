@@ -53,20 +53,74 @@ const stats = new PoolStats(config.stats);
 class NodeRPC {
     constructor(nodeConfig) {
         this.url = nodeConfig.rpcUrl;
-        this.auth = {
+        this.userpass = {
             username: nodeConfig.rpcUser,
             password: nodeConfig.rpcPass
         };
+        this.cookiePathUsed = null;
+        this.authMode = (this.userpass.username && this.userpass.password) ? 'userpass' : 'cookie';
+        this.cookieMtimeMs = 0;
         this.lastOkAt = 0;
         this.lastOkMethod = '';
         this.client = axios.create({
             baseURL: this.url,
-            auth: this.auth,
             timeout: 5000
         });
+        if (this.authMode === 'userpass') {
+            this.client.defaults.auth = this.userpass;
+        } else {
+            this.refreshCookieAuth();
+        }
+    }
+
+    getDefaultCookieCandidates() {
+        const out = [];
+        const home = process.env.HOME || '';
+        if (home) {
+            out.push(path.join(home, '.bitcoin', '.cookie'));
+            out.push(path.join(home, '.bitcoin', 'testnet3', '.cookie'));
+            out.push(path.join(home, '.bitcoin', 'regtest', '.cookie'));
+        }
+        out.push('/var/lib/bitcoind/.bitcoin/.cookie');
+        out.push('/var/lib/bitcoind/.bitcoin/testnet3/.cookie');
+        out.push('/var/lib/bitcoind/.bitcoin/regtest/.cookie');
+        out.push('/var/lib/bitcoin/.bitcoin/.cookie');
+        out.push('/var/lib/bitcoin/.bitcoin/testnet3/.cookie');
+        out.push('/var/lib/bitcoin/.bitcoin/regtest/.cookie');
+        out.push('/root/.bitcoin/.cookie');
+        out.push('/root/.bitcoin/testnet3/.cookie');
+        out.push('/root/.bitcoin/regtest/.cookie');
+        return out;
+    }
+
+    refreshCookieAuth() {
+        if (this.authMode === 'userpass') return true;
+        const configured = process.env.DIBI8_RPC_COOKIE_FILE;
+        const candidates = configured ? [configured] : this.getDefaultCookieCandidates();
+        for (const p of candidates) {
+            try {
+                if (!p || !fs.existsSync(p)) continue;
+                const st = fs.statSync(p);
+                const mtime = Number(st.mtimeMs || 0);
+                if (this.cookiePathUsed === p && this.cookieMtimeMs === mtime && this.client.defaults.auth) return true;
+                const raw = String(fs.readFileSync(p, 'utf8') || '').trim();
+                if (!raw || !raw.includes(':')) continue;
+                const idx = raw.indexOf(':');
+                const username = raw.slice(0, idx);
+                const password = raw.slice(idx + 1);
+                if (!username || !password) continue;
+                this.client.defaults.auth = { username, password };
+                this.cookiePathUsed = p;
+                this.cookieMtimeMs = mtime;
+                return true;
+            } catch (e) {}
+        }
+        this.cookiePathUsed = null;
+        return false;
     }
 
     async call(method, params = []) {
+        if (this.authMode !== 'userpass') this.refreshCookieAuth();
         try {
             const response = await this.client.post('/', {
                 jsonrpc: "2.0",
@@ -95,7 +149,8 @@ const nodeRuntimeConfig = {
     apiUrl: process.env.DIBI8_API_URL || nodeConfig.apiUrl,
     rpcUrl: process.env.DIBI8_RPC_URL || nodeConfig.rpcUrl,
     rpcUser: process.env.DIBI8_RPC_USER || nodeConfig.rpcUser,
-    rpcPass: process.env.DIBI8_RPC_PASS || nodeConfig.rpcPass
+    rpcPass: process.env.DIBI8_RPC_PASS || nodeConfig.rpcPass,
+    rpcCookieFile: process.env.DIBI8_RPC_COOKIE_FILE || nodeConfig.rpcCookieFile
 };
 
 const rpc = new NodeRPC(nodeRuntimeConfig);
@@ -616,6 +671,8 @@ app.get('/api/health', (req, res) => res.json({
     time: Date.now(),
     node: {
         rpcUrl: nodeRuntimeConfig.rpcUrl || null,
+        authMode: rpc.authMode || null,
+        cookiePathUsed: rpc.cookiePathUsed || null,
         lastOkAt: rpc.lastOkAt || 0,
         lastOkMethod: rpc.lastOkMethod || '',
         lastError: rpc.lastError || null
