@@ -27,7 +27,12 @@
             color: #fff;
             min-height: 100vh;
             overflow-x: hidden;
+            -webkit-tap-highlight-color: transparent;
         }
+
+        a, button { touch-action: manipulation; }
+
+        input, textarea, select { font-size: 16px; }
 
         /* 动态背景：深度参考 dibi8.com 的数字维度空间 */
         .bg-animate {
@@ -437,6 +442,55 @@
         /* 隐藏滚动条 */
         .log-box::-webkit-scrollbar { width: 4px; }
         .log-box::-webkit-scrollbar-thumb { background: var(--card-border); border-radius: 10px; }
+
+        .mobile-nav {
+            position: fixed;
+            left: 12px;
+            right: 12px;
+            bottom: 12px;
+            background: rgba(0, 0, 0, 0.55);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.10);
+            border-radius: 18px;
+            padding: 10px 12px;
+            display: none;
+            z-index: 50;
+        }
+
+        .mobile-nav a {
+            flex: 1;
+            text-decoration: none;
+            color: rgba(255, 255, 255, 0.75);
+            font-size: 0.78rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            min-height: 44px;
+            border-radius: 12px;
+        }
+
+        .mobile-nav a.active {
+            color: #000;
+            background: var(--primary);
+        }
+
+        .mobile-nav .icon {
+            font-size: 1.1rem;
+            line-height: 1;
+        }
+
+        @media (max-width: 768px) {
+            .container { padding: 24px 16px 98px; }
+            .lang-switcher { justify-content: center; }
+            .lang-btn { padding: 10px 14px; min-height: 44px; }
+            .miner-core { gap: 16px; }
+            .panel { padding: 18px; border-radius: 20px; }
+            .actions { flex-direction: column; gap: 12px; }
+            .btn { width: 100%; min-height: 48px; justify-content: center; }
+            .mobile-nav { display: flex; gap: 8px; }
+        }
     </style>
 </head>
 <body>
@@ -556,6 +610,25 @@
             </div>
         </div>
     </div>
+
+    <nav class="mobile-nav" aria-label="DIBI8 Mobile Navigation">
+        <a href="/modern">
+            <span class="icon">🏠</span>
+            <span>Home</span>
+        </a>
+        <a href="/modern-miner" class="active">
+            <span class="icon">⛏️</span>
+            <span>Mining</span>
+        </a>
+        <a href="/modern-stratum">
+            <span class="icon">🔗</span>
+            <span>Stratum</span>
+        </a>
+        <a href="/modern-wallet">
+            <span class="icon">👛</span>
+            <span>Wallet</span>
+        </a>
+    </nav>
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
