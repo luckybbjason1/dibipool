@@ -541,11 +541,14 @@
                     <label data-i18n="power_limit">Mining Power Limit</label>
                     <div class="power-row">
                         <div>
-                            <input class="slider" type="range" id="powerSlider" min="1" max="80" value="60">
+                            <input class="slider" type="range" id="powerSlider" min="1" max="80" value="50">
                             <div class="power-meter">
                                 <span data-i18n="power_current">Current</span>
-                                <strong id="powerValue">60%</strong>
+                                <strong id="powerValue">50%</strong>
                                 <span id="powerCapHint" style="color: rgba(255,255,255,0.45);"></span>
+                            </div>
+                            <div style="margin-top: 8px; font-size: 0.78rem; color: rgba(255,255,255,0.65); line-height: 1.4;" data-i18n="power_default_note">
+                                Default is 50% to protect your device. You can adjust anytime. Unlocking 100% requires explicit consent.
                             </div>
                         </div>
                         <button class="mini-btn" id="unlockBtn" type="button" onclick="openConsentModal()" data-i18n="unlock_100">UNLOCK 100%</button>
@@ -797,6 +800,7 @@
                 notify: "Alerts",
                 power_limit: "Mining Power Limit",
                 power_current: "Current",
+                power_default_note: "Default is 50% to protect your device. You can adjust anytime. Unlocking 100% requires explicit consent.",
                 unlock_100: "UNLOCK 100%",
                 consent_title: "HIGH POWER CONSENT",
                 consent_desc: "To protect users, mining power is capped at 80% by default. Unlocking 100% may increase CPU usage, heat, fan noise, and battery drain. Proceed only if you understand and agree.",
@@ -835,6 +839,7 @@
                 notify: "通知",
                 power_limit: "网页挖矿强度上限",
                 power_current: "当前",
+                power_default_note: "默认 50% 以保护设备，可随时调整；解锁 100% 必须明确同意。",
                 unlock_100: "解锁 100%",
                 consent_title: "高强度同意确认",
                 consent_desc: "为保护用户，默认仅允许开到 80%。解锁 100% 可能导致 CPU 占用上升、发热、风扇噪音、耗电增加。仅在你明确理解并同意后继续。",
@@ -873,6 +878,7 @@
                 notify: "알림",
                 power_limit: "채굴 강도 제한",
                 power_current: "현재",
+                power_default_note: "기본값은 기기 보호를 위해 50%입니다. 언제든 조절 가능하며 100%는 명시적 동의가 필요합니다.",
                 unlock_100: "100% 잠금 해제",
                 consent_title: "고강도 동의 확인",
                 consent_desc: "사용자 보호를 위해 기본 채굴 강도는 80%로 제한됩니다. 100% 잠금 해제 시 CPU 사용률, 발열, 팬 소음, 배터리 소모가 증가할 수 있습니다. 이해하고 동의하는 경우에만 진행하세요.",
@@ -911,6 +917,7 @@
                 notify: "Thông báo",
                 power_limit: "Giới hạn công suất đào",
                 power_current: "Hiện tại",
+                power_default_note: "Mặc định 50% để bảo vệ thiết bị. Bạn có thể điều chỉnh bất cứ lúc nào; 100% yêu cầu xác nhận rõ ràng.",
                 unlock_100: "MỞ KHÓA 100%",
                 consent_title: "XÁC NHẬN CÔNG SUẤT CAO",
                 consent_desc: "Để bảo vệ người dùng, công suất đào mặc định bị giới hạn ở 80%. Mở khóa 100% có thể tăng mức dùng CPU, nhiệt, tiếng ồn quạt và hao pin. Chỉ tiếp tục nếu bạn hiểu và đồng ý.",
@@ -1026,7 +1033,7 @@
             const unlockBtn = document.getElementById('unlockBtn');
 
             slider.max = String(getPowerMax());
-            let v = parseInt(slider.value || '60', 10);
+            let v = parseInt(slider.value || '50', 10);
             if (!Number.isFinite(v)) v = 60;
             const max = getPowerMax();
             if (v > max) v = max;
@@ -1103,8 +1110,8 @@
             syncPowerUI();
         });
 
-        const savedPower = parseInt(storageGet('dibi8_power') || '60', 10);
-        document.getElementById('powerSlider').value = String(Number.isFinite(savedPower) ? savedPower : 60);
+        const savedPower = parseInt(storageGet('dibi8_power') || '50', 10);
+        document.getElementById('powerSlider').value = String(Number.isFinite(savedPower) ? savedPower : 50);
         syncPowerUI();
 
         function log(msg, type = 'info', i18nKey = null) {
