@@ -1,4 +1,6 @@
-TRAE/
+TRAE/*
+!TRAE/GPT52/
+!TRAE/GPT52/**
 node_modules/
 config/pool.local.json
 .env
