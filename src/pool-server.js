@@ -194,9 +194,13 @@ function getOnlineMinerCounts() {
 function isValidDibiAddress(address) {
     if (typeof address !== 'string') return false;
     const a = address.trim().toLowerCase();
-    if (/^dibi1[0-9a-f]{40}$/.test(a)) return true;
-    if (!a.startsWith('dibi1')) return false;
-    const body = a.slice(5);
+    const prefix = String((config.chain && config.chain.address && config.chain.address.prefix) || 'dibi1').toLowerCase();
+    if (!prefix) return false;
+    const escaped = prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const hexRe = new RegExp(`^${escaped}[0-9a-f]{40}$`);
+    if (hexRe.test(a)) return true;
+    if (!a.startsWith(prefix)) return false;
+    const body = a.slice(prefix.length);
     if (!body) return false;
     if (body.length < 20 || body.length > 120) return false;
     return /^[qpzry9x8gf2tvdw0s3jn54khce6mua7l]+$/.test(body);
@@ -457,7 +461,8 @@ io.on('connection', (socket) => {
         }
         const { address, worker } = data;
         if (!isValidDibiAddress(address)) {
-            socket.emit('auth_result', { success: false, message: 'Invalid Wallet Address (dibi1...)' });
+            const prefix = String((config.chain && config.chain.address && config.chain.address.prefix) || 'dibi1');
+            socket.emit('auth_result', { success: false, message: `Invalid Wallet Address (${prefix}...)` });
             return socket.disconnect(true);
         }
         socket.minerAddress = address || 'anonymous';
