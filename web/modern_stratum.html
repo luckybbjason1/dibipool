@@ -314,7 +314,7 @@
                 <div class="config-box">
                     <button class="copy-btn" onclick="copyConfig()" data-i18n="copy">COPY</button>
                     <div id="configText">
-                        gminer.exe --algo dibi8 --server hk.dibi8.com:4444 --user dibi1aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.worker01
+                        gminer.exe --algo dibi8 --server hk.dibi8.com:4444 --user dibi1e3846fe8d9f436c6c91f277fed0f069d607cc6d4.worker01
                     </div>
                 </div>
 
@@ -359,7 +359,7 @@
                             </div>
                             3. <span data-i18n="linux_step_3">Run in background (Screen):</span> <br>
                             <div class="config-box" style="margin: 8px 0; padding: 10px; font-size: 0.75rem;">
-                                <button class="copy-btn" onclick="copyText('screen -S dibi_mining ./miner --algo dibi8 --server pool.dibi8.com:4444 --user dibi1aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa')">COPY</button>
+                                <button class="copy-btn" onclick="copyText('screen -S dibi_mining ./miner --algo dibi8 --server pool.dibi8.com:4444 --user dibi1e3846fe8d9f436c6c91f277fed0f069d607cc6d4')">COPY</button>
                                 <code>screen -S dibi_mining ./miner ...</code>
                             </div>
                         </div>
@@ -443,10 +443,10 @@
 
         // 软件选择逻辑
         const configs = {
-            gminer: "gminer.exe --algo dibi8 --server hk.dibi8.com:4444 --user dibi1aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.worker01",
-            trex: "t-rex.exe -a dibi8 -o stratum+tcp://hk.dibi8.com:4444 -u dibi1aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa -p x",
-            srb: "SRBMiner-MULTI.exe --algorithm dibi8 --pool hk.dibi8.com:4444 --wallet dibi1aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-            nbminer: "nbminer.exe -a dibi8 -o stratum+tcp://hk.dibi8.com:4444 -u dibi1aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            gminer: "gminer.exe --algo dibi8 --server hk.dibi8.com:4444 --user dibi1e3846fe8d9f436c6c91f277fed0f069d607cc6d4.worker01",
+            trex: "t-rex.exe -a dibi8 -o stratum+tcp://hk.dibi8.com:4444 -u dibi1e3846fe8d9f436c6c91f277fed0f069d607cc6d4 -p x",
+            srb: "SRBMiner-MULTI.exe --algorithm dibi8 --pool hk.dibi8.com:4444 --wallet dibi1e3846fe8d9f436c6c91f277fed0f069d607cc6d4",
+            nbminer: "nbminer.exe -a dibi8 -o stratum+tcp://hk.dibi8.com:4444 -u dibi1e3846fe8d9f436c6c91f277fed0f069d607cc6d4"
         };
 
         function selectSW(sw) {
