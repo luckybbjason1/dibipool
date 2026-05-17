@@ -256,7 +256,9 @@ function verifyShare(header, nonce, target) {
  */
 async function refreshJob() {
     const template = await rpc.call('getblocktemplate', [{ rules: ['segwit'] }]);
+    const blockCount = await rpc.call('getblockcount', []);
     const netHash = await rpc.call('getnetworkhashps', []);
+    const miningInfo = await rpc.call('getmininginfo', []);
     
     if (template) {
         const newHeader = crypto.createHash('sha256').update(template.previousblockhash + template.curtime).digest('hex');
@@ -281,12 +283,19 @@ async function refreshJob() {
             });
         }
     } else {
-        // 降级处理...
+        if (typeof blockCount === 'number' && Number.isFinite(blockCount) && blockCount > 0 && blockCount !== currentJob.height) {
+            currentJob.height = blockCount;
+        }
     }
 
-    if (typeof netHash === 'number' && Number.isFinite(netHash) && netHash > 0) {
-        networkHashrateHps = netHash;
-    } else if (netHash === null) {
+    const net = (typeof netHash === 'number' && Number.isFinite(netHash) && netHash > 0)
+        ? netHash
+        : (miningInfo && typeof miningInfo.networkhashps === 'number' && Number.isFinite(miningInfo.networkhashps) && miningInfo.networkhashps > 0)
+            ? miningInfo.networkhashps
+            : null;
+    if (net) {
+        networkHashrateHps = net;
+    } else if (netHash === null && miningInfo === null) {
         networkHashrateHps = null;
     }
 }
@@ -437,7 +446,6 @@ io.on('connection', (socket) => {
             
             if (isRealBlock) {
                 console.log(`[Pool] 🏆 矿工 ${socket.minerAddress} 找到了真实区块!`);
-                await rpc.call('submitblock', [/* data */]);
             }
 
             // 记录有效份额到 PPLNS 系统
