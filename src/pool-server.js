@@ -476,6 +476,7 @@ app.get('/', (req, res) => res.sendFile(path.join(__dirname, '../web/index.html'
 // ==================== 启动服务 ====================
 
 const PORT = process.env.PORT || config.pool.port || 4000;
-server.listen(PORT, () => {
-    console.log(`\n🚀 DIBI8 Pool (WebSocket Enabled) running on port ${PORT}\n`);
+const HOST = process.env.HOST || '0.0.0.0';
+server.listen(PORT, HOST, () => {
+    console.log(`\n🚀 DIBI8 Pool (WebSocket Enabled) running on ${HOST}:${PORT}\n`);
 });
