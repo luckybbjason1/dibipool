@@ -392,10 +392,15 @@
                                 <button class="copy-btn" onclick="copyText('tar -xf gminer_3_43_linux64.tar.xz && chmod +x miner')">COPY</button>
                                 <code>tar -xf ... && chmod +x miner</code>
                             </div>
-                            3. <span data-i18n="linux_step_3">Run in background (Screen):</span> <br>
+                            3. <span data-i18n="linux_step_3">Run in foreground (+):</span> <br>
                             <div class="config-box" style="margin: 8px 0; padding: 10px; font-size: 0.75rem;">
-                                <button class="copy-btn" onclick="copyText('screen -S dibi_mining ./miner --algo dibi8 --server pool.dibi8.com:3333 --user dibi1e3846fe8d9f436c6c91f277fed0f069d607cc6d4')">COPY</button>
-                                <code>screen -S dibi_mining ./miner ...</code>
+                                <button class="copy-btn" onclick="copyText('./miner --algo dibi8 --server pool.dibi8.com:3333 --user dibi1e3846fe8d9f436c6c91f277fed0f069d607cc6d4 +')">COPY</button>
+                                <code>./miner ... +</code>
+                            </div>
+                            4. <span data-i18n="linux_step_4">Run in background (nohup &amp;):</span> <br>
+                            <div class="config-box" style="margin: 8px 0; padding: 10px; font-size: 0.75rem;">
+                                <button class="copy-btn" onclick="copyText('nohup ./miner --algo dibi8 --server pool.dibi8.com:3333 --user dibi1e3846fe8d9f436c6c91f277fed0f069d607cc6d4 > miner.log 2>&1 &')">COPY</button>
+                                <code>nohup ./miner ... &gt; miner.log 2&gt;&amp;1 &amp;</code>
                             </div>
                         </div>
                     </div>
@@ -546,7 +551,8 @@
                 win_step_3: "Paste the generated config and run.",
                 linux_step_1: "Install dependencies & Download:",
                 linux_step_2: "Extract & Grant permission:",
-                linux_step_3: "Run in background (Screen):",
+                linux_step_3: "Run in foreground (+):",
+                linux_step_4: "Run in background (nohup &):",
                 quick_tips: "QUICK TIPS",
                 tip_wallet: "Use your DIBI8 wallet address as the username.",
                 tip_worker: "Append a worker name using a dot (e.g. .rig01).",
@@ -574,7 +580,8 @@
                 win_step_3: "粘贴生成的配置并运行它。",
                 linux_step_1: "安装依赖并下载：",
                 linux_step_2: "解压并赋予权限：",
-                linux_step_3: "后台运行 (Screen)：",
+                linux_step_3: "前台运行（命令末尾 +）：",
+                linux_step_4: "后台运行（nohup &）：",
                 quick_tips: "快速提示",
                 tip_wallet: "使用您的 DIBI8 钱包地址作为用户名。",
                 tip_worker: "使用点号添加矿工名称 (例如 .rig01)。",
@@ -602,7 +609,8 @@
                 win_step_3: "생성된 구성을 붙여넣고 실행합니다.",
                 linux_step_1: "종속성 설치 및 다운로드:",
                 linux_step_2: "압축 해제 및 권한 부여:",
-                linux_step_3: "백그라운드 실행 (Screen):",
+                linux_step_3: "포그라운드 실행 (+):",
+                linux_step_4: "백그라운드 실행 (nohup &):",
                 quick_tips: "빠른 팁",
                 tip_wallet: "DIBI8 지갑 주소를 사용자 이름으로 사용하십시오.",
                 tip_worker: "점(.)을 사용하여 작업자 이름을 추가하십시오 (예: .rig01).",
@@ -630,7 +638,8 @@
                 win_step_3: "Dán cấu hình đã tạo và chạy nó.",
                 linux_step_1: "Cài đặt phụ thuộc & Tải xuống:",
                 linux_step_2: "Giải nén & Cấp quyền:",
-                linux_step_3: "Chạy trong nền (Screen):",
+                linux_step_3: "Chạy tiền cảnh (+):",
+                linux_step_4: "Chạy nền (nohup &):",
                 quick_tips: "MẸO NHANH",
                 tip_wallet: "Sử dụng địa chỉ ví DIBI8 của bạn làm tên người dùng.",
                 tip_worker: "Thêm tên thợ đào bằng dấu chấm (ví dụ: .rig01).",
