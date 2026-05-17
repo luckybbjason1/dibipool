@@ -92,6 +92,20 @@ class PoolStats {
         const poolFee = 0.01; // 1% 矿池手续费
         const rewardToDistribute = totalReward * (1 - poolFee);
 
+        if (blockInfo && blockInfo.minerAddress) {
+            const winner = blockInfo.minerAddress;
+            if (!this.miners[winner]) {
+                this.miners[winner] = {
+                    hashCount: 0,
+                    lastSeen: Date.now(),
+                    totalBlocks: 0,
+                    balance: 0,
+                    workers: {}
+                };
+            }
+            this.miners[winner].totalBlocks += 1;
+        }
+
         // 计算窗口内总难度
         const totalWindowDiff = this.shares.reduce((sum, s) => sum + s.difficulty, 0);
         
@@ -178,7 +192,7 @@ class PoolStats {
             address,
             hashrate: miner.hashCount,
             totalBlocks: miner.totalBlocks,
-            pendingBalance: miner.pendingBalance,
+            balance: miner.balance,
             workers: Object.entries(miner.workers).map(([id, w]) => ({
                 id,
                 hashrate: w.hashCount,

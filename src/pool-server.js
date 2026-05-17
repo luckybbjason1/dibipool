@@ -370,7 +370,14 @@ io.on('connection', (socket) => {
             socket.emit('share_result', { success: false, message: 'Rate Limited' });
             return socket.disconnect(true);
         }
+        if (!socket.minerAddress) {
+            return socket.emit('share_result', { success: false, message: 'Not Authenticated' });
+        }
         const { nonce, header } = data;
+        const nonceInt = typeof nonce === 'number' ? nonce : parseInt(String(nonce || ''), 10);
+        if (!Number.isInteger(nonceInt) || nonceInt < 0 || nonceInt > 0xffffffff) {
+            return socket.emit('share_result', { success: false, message: 'Invalid Nonce' });
+        }
         
         // 防作弊 1：验证任务是否过期 (Stale Share)
         if (header !== currentJob.header) {
@@ -378,14 +385,14 @@ io.on('connection', (socket) => {
         }
 
         // 防作弊 2：防止重放攻击 (Duplicate Share)
-        const shareKey = `${header}_${nonce}`;
+        const shareKey = `${header}_${nonceInt}`;
         if (usedNonces.has(shareKey)) {
             return socket.emit('share_result', { success: false, message: 'Duplicate Share' });
         }
 
         // 防作弊 3：服务端哈希验证 (Fake Share Verification)
         const shareTarget = socket.shareTarget || currentJob.shareTarget;
-        const isValid = verifyShare(header, nonce, shareTarget);
+        const isValid = verifyShare(header, nonceInt, shareTarget);
         if (!isValid) {
             console.warn(`[Anti-Cheat] 检测到非法份额提交! Miner: ${socket.minerAddress}`);
             return socket.emit('share_result', { success: false, message: 'Low Difficulty Share' });
@@ -401,7 +408,7 @@ io.on('connection', (socket) => {
             }
 
             // 如果哈希值达到了全网难度 (Real Block Found!)
-            const isRealBlock = verifyShare(header, nonce, currentJob.target);
+            const isRealBlock = verifyShare(header, nonceInt, currentJob.target);
             
             if (isRealBlock) {
                 console.log(`[Pool] 🏆 矿工 ${socket.minerAddress} 找到了真实区块!`);
@@ -410,10 +417,10 @@ io.on('connection', (socket) => {
 
             // 记录有效份额到 PPLNS 系统
             stats.recordMine(socket.minerAddress, socket.workerId, {
-                difficulty: 1,
+                difficulty: socket.shareDifficulty || 1,
                 isBlock: isRealBlock,
                 height: currentJob.height,
-                hash: crypto.createHash('sha256').update(header + nonce).digest('hex'),
+                hash: crypto.createHash('sha256').update(header + String(nonceInt)).digest('hex'),
                 reward: config.pool.rewardPerBlock || 100,
                 minerAddress: socket.minerAddress
             });
