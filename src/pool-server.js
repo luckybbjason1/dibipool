@@ -57,6 +57,8 @@ class NodeRPC {
             username: nodeConfig.rpcUser,
             password: nodeConfig.rpcPass
         };
+        this.lastOkAt = 0;
+        this.lastOkMethod = '';
         this.client = axios.create({
             baseURL: this.url,
             auth: this.auth,
@@ -73,6 +75,8 @@ class NodeRPC {
                 params: params
             });
             if (response.data.error) throw new Error(response.data.error.message);
+            this.lastOkAt = Date.now();
+            this.lastOkMethod = method;
             return response.data.result;
         } catch (err) {
             // 仅在首次失败或状态变化时记录日志，避免刷屏
@@ -584,7 +588,33 @@ setInterval(() => {
 
 app.use(express.static(path.join(__dirname, '../web')));
 
-app.get('/api/stats', (req, res) => res.json(stats.getStats()));
+app.get('/api/stats', (req, res) => res.json({
+    ...stats.getStats(),
+    networkHashrateHps,
+    chainHeight: currentJob.height
+}));
+app.get('/api/health', (req, res) => res.json({
+    ok: true,
+    time: Date.now(),
+    node: {
+        rpcUrl: nodeRuntimeConfig.rpcUrl || null,
+        lastOkAt: rpc.lastOkAt || 0,
+        lastOkMethod: rpc.lastOkMethod || '',
+        lastError: rpc.lastError || null
+    },
+    network: {
+        networkHashrateHps,
+        chainHeight: currentJob.height
+    },
+    payouts: {
+        enabled: payoutsEnabled,
+        intervalMs: payoutIntervalMs,
+        minPayout,
+        maxPayout,
+        maxPerRun: maxPayoutsPerRun,
+        running: payoutRunning
+    }
+}));
 app.get('/api/miner/:address', (req, res) => {
     const address = String(req.params.address || '').trim();
     const miner = stats.getMiner(address);

@@ -1027,6 +1027,7 @@
 
         // 订阅实时统计
         socket.emit('subscribe_stats');
+        let lastStatsAt = 0;
 
         function formatHashrate(hps) {
             const n = Number(hps || 0);
@@ -1038,7 +1039,7 @@
             return { value: n.toFixed(0), unit: 'H/s' };
         }
 
-        socket.on('stats_update', (data) => {
+        function applyStats(data) {
             // 更新统计
             const unitMiners = i18n[currentLang].unit_miners || "Miners";
             const unitBlocks = i18n[currentLang].unit_blocks || "Blocks";
@@ -1064,7 +1065,24 @@
                 `;
                 tbody.innerHTML += row;
             });
+        }
+
+        socket.on('stats_update', (data) => {
+            lastStatsAt = Date.now();
+            applyStats(data);
         });
+
+        setInterval(async () => {
+            const now = Date.now();
+            if (lastStatsAt && (now - lastStatsAt) < 7000) return;
+            try {
+                const resp = await fetch('/api/stats', { cache: 'no-store' });
+                if (!resp.ok) return;
+                const data = await resp.json();
+                lastStatsAt = Date.now();
+                applyStats(data);
+            } catch (e) {}
+        }, 5000);
 
         socket.on('new_block', (block) => {
             const blocksDiv = document.getElementById('recentBlocks');
