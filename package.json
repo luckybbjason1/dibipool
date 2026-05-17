@@ -1,0 +1,15 @@
+{
+  "name": "dibipool",
+  "version": "1.0.0",
+  "private": true,
+  "main": "src/pool-server.js",
+  "scripts": {
+    "start": "node src/pool-server.js"
+  },
+  "dependencies": {
+    "axios": "^1.7.9",
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "socket.io": "^4.8.1"
+  }
+}
