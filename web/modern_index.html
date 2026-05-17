@@ -478,7 +478,7 @@
         <div class="stats-grid">
             <div class="stat-card">
                 <div class="stat-label" data-i18n="net_hashrate">Network Hashrate</div>
-                <div class="stat-value" id="totalHashrate">0 <span class="unit">MH/s</span></div>
+                <div class="stat-value" id="totalHashrate">— <span class="unit">H/s</span></div>
                 <div class="stat-sub" data-i18n="hashrate_up">↑ Stable performance</div>
             </div>
             <div class="stat-card">
@@ -487,7 +487,7 @@
                 <div class="stat-sub" data-i18n="global_dist">Global distribution</div>
             </div>
             <div class="stat-card">
-                <div class="stat-label" data-i18n="pool_blocks">Pool Blocks</div>
+                <div class="stat-label" data-i18n="network_height">Network Height</div>
                 <div class="stat-value" id="blockHeight">0 <span class="unit" data-i18n="unit_blocks">Blocks</span></div>
                 <div class="stat-sub" data-i18n="luck">Luck: 100%</div>
             </div>
@@ -534,7 +534,7 @@
                     <input type="number" id="calcHash" value="10" 
                            style="width: 100px; background: rgba(0,0,0,0.3); border: 1px solid var(--card-border); padding: 12px; border-radius: 12px; color: #fff;">
                     <span class="unit">MH/s</span>
-                    <span style="color: var(--accent-green); font-weight: 600;">≈ <span id="calcResult">1200</span> DIBI / Day</span>
+                    <span style="color: var(--accent-green); font-weight: 600;">≈ <span id="calcResult">—</span> <span data-i18n="calc_unit">% of Network</span></span>
                 </div>
             </div>
         </div>
@@ -754,7 +754,7 @@
                 active_miners: "Active Miners",
                 unit_miners: "Miners",
                 global_dist: "Global distribution",
-                pool_blocks: "Pool Blocks",
+                network_height: "Network Height",
                 unit_blocks: "Blocks",
                 luck: "Luck: 100%",
                 start_mining: "⚡ START MINING NOW",
@@ -773,7 +773,8 @@
                 just_now: "Just now",
                 check_stats: "Check Your Stats",
                 search_btn: "SEARCH",
-                profit_calc: "Mining Calculator",
+                profit_calc: "Network Share",
+                calc_unit: "% of Network",
                 day: "Day",
                 connection_info: "Connection Information",
                 stratum_url: "Stratum URL",
@@ -793,7 +794,7 @@
                 active_miners: "活跃矿工",
                 unit_miners: "人",
                 global_dist: "全球分布式节点",
-                pool_blocks: "矿池出块",
+                network_height: "网络高度",
                 unit_blocks: "块",
                 luck: "幸运值: 100%",
                 start_mining: "⚡ 立即开始挖矿",
@@ -812,7 +813,8 @@
                 just_now: "刚刚",
                 check_stats: "查询个人统计",
                 search_btn: "查询",
-                profit_calc: "收益计算器",
+                profit_calc: "全网占比",
+                calc_unit: "%（占全网）",
                 day: "天",
                 connection_info: "连接信息",
                 stratum_url: "Stratum 地址",
@@ -832,7 +834,7 @@
                 active_miners: "활성 광부",
                 unit_miners: "명",
                 global_dist: "글로벌 분산",
-                pool_blocks: "풀 블록",
+                network_height: "네트워크 높이",
                 unit_blocks: "블록",
                 luck: "운: 100%",
                 start_mining: "⚡ 지금 마이닝 시작",
@@ -851,7 +853,8 @@
                 just_now: "방금 전",
                 check_stats: "내 통계 확인",
                 search_btn: "검색",
-                profit_calc: "수익 계산기",
+                profit_calc: "네트워크 점유율",
+                calc_unit: "% (네트워크)",
                 day: "일",
                 connection_info: "연결 정보",
                 stratum_url: "Stratum URL",
@@ -871,7 +874,7 @@
                 active_miners: "Thợ đào đang hoạt động",
                 unit_miners: "Thợ đào",
                 global_dist: "Phân phối toàn cầu",
-                pool_blocks: "Khối của bể",
+                network_height: "Chiều cao mạng",
                 unit_blocks: "Khối",
                 luck: "May mắn: 100%",
                 start_mining: "⚡ BẮT ĐẦU ĐÀO NGAY",
@@ -890,7 +893,8 @@
                 just_now: "Vừa xong",
                 check_stats: "Kiểm tra thống kê",
                 search_btn: "TÌM KIẾM",
-                profit_calc: "Máy tính lợi nhuận",
+                profit_calc: "Tỷ lệ mạng",
+                calc_unit: "% của mạng",
                 day: "Ngày",
                 connection_info: "Thông tin kết nối",
                 stratum_url: "URL Stratum",
@@ -965,58 +969,96 @@
         // 初始化语言
         updateUI();
 
+        let lastNetworkHashrateHps = 0;
+
         // 搜索与计算器逻辑
-        function lookupStats() {
+        async function lookupStats() {
             const addr = document.getElementById('searchAddr').value.trim();
             const personalDiv = document.getElementById('personalStats');
             if (!addr) return;
 
-            // 模拟查询动效
             personalDiv.style.display = 'block';
-            personalDiv.innerHTML = `<div style="text-align:center; padding: 10px; color: var(--primary); font-size: 0.8rem;">Querying Blockchain Node...</div>`;
-            
-            setTimeout(() => {
-                const isTestWallet = addr === "dibi1e3846fe8d9f436c6c91f277fed0f069d607cc6d4";
+            personalDiv.innerHTML = `<div style="text-align:center; padding: 10px; color: var(--primary); font-size: 0.8rem;">Loading...</div>`;
+
+            try {
+                const resp = await fetch(`/api/miner?address=${encodeURIComponent(addr)}`, { cache: 'no-store' });
+                if (!resp.ok) {
+                    personalDiv.innerHTML = `<div style="color: rgba(255,255,255,0.75); font-size: 0.85rem;">Not found.</div>`;
+                    return;
+                }
+                const miner = await resp.json();
+                const rate = formatHashrate(miner.hashrateHps);
+                const blocks = Number(miner.totalBlocks || 0);
+                const workers = Array.isArray(miner.workers) ? miner.workers.length : 0;
+                const balance = Number(miner.balance || 0);
+                const totalPaid = Number(miner.totalPaid || 0);
+                const lastPayout = Array.isArray(miner.payouts) && miner.payouts.length ? miner.payouts[0] : null;
+                const lastPayoutAmt = lastPayout && Number.isFinite(Number(lastPayout.amount)) ? Number(lastPayout.amount) : 0;
+                const lastPayoutTxid = lastPayout && lastPayout.txid ? String(lastPayout.txid) : '';
+                const lastPayoutTxidShort = lastPayoutTxid ? (lastPayoutTxid.slice(0, 10) + '...' + lastPayoutTxid.slice(-8)) : '—';
                 personalDiv.innerHTML = `
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                        <div><small>Hashrate:</small> <br><strong>${isTestWallet ? '4.85' : '0.00'} MH/s</strong></div>
-                        <div><small>Blocks:</small> <br><strong>${isTestWallet ? '156' : '0'}</strong></div>
-                        <div style="grid-column: span 2; margin-top: 10px; font-size: 0.8rem; color: var(--primary);">
-                            Status: ${isTestWallet ? 'Active (3 Workers)' : 'Inactive'}
-                        </div>
+                        <div><small>Hashrate:</small> <br><strong>${rate.value} ${rate.unit}</strong></div>
+                        <div><small>Blocks:</small> <br><strong>${blocks}</strong></div>
+                        <div><small>Workers:</small> <br><strong>${workers}</strong></div>
+                        <div><small>Balance:</small> <br><strong>${balance.toFixed(6)} DIBI</strong></div>
+                        <div><small>Total Paid:</small> <br><strong>${totalPaid.toFixed(6)} DIBI</strong></div>
+                        <div><small>Last Payout:</small> <br><strong>${lastPayoutAmt ? lastPayoutAmt.toFixed(6) + ' DIBI' : '—'}</strong></div>
+                        <div style="grid-column: span 2;"><small>Txid:</small> <br><strong style="font-family: monospace; font-size: 0.85rem;">${lastPayoutTxidShort}</strong></div>
                     </div>
                 `;
-            }, 800);
+            } catch (e) {
+                personalDiv.innerHTML = `<div style="color: rgba(255,255,255,0.75); font-size: 0.85rem;">Error.</div>`;
+            }
         }
 
         const calcInput = document.getElementById('calcHash');
         const calcResult = document.getElementById('calcResult');
         calcInput.addEventListener('input', () => {
-            const hash = parseFloat(calcInput.value) || 0;
-            calcResult.innerText = (hash * 120).toFixed(0); // 模拟每 MH/s 收益 120 DIBI
+            const mh = parseFloat(calcInput.value) || 0;
+            const userHps = mh * 1e6;
+            const net = Number(lastNetworkHashrateHps || 0);
+            if (!Number.isFinite(net) || net <= 0 || !Number.isFinite(userHps) || userHps <= 0) {
+                calcResult.innerText = '—';
+                return;
+            }
+            calcResult.innerText = ((userHps / net) * 100).toFixed(6);
         });
 
         // 订阅实时统计
         socket.emit('subscribe_stats');
+
+        function formatHashrate(hps) {
+            const n = Number(hps || 0);
+            if (!Number.isFinite(n) || n <= 0) return { value: '—', unit: 'H/s' };
+            if (n >= 1e12) return { value: (n / 1e12).toFixed(2), unit: 'TH/s' };
+            if (n >= 1e9) return { value: (n / 1e9).toFixed(2), unit: 'GH/s' };
+            if (n >= 1e6) return { value: (n / 1e6).toFixed(2), unit: 'MH/s' };
+            if (n >= 1e3) return { value: (n / 1e3).toFixed(2), unit: 'KH/s' };
+            return { value: n.toFixed(0), unit: 'H/s' };
+        }
 
         socket.on('stats_update', (data) => {
             // 更新统计
             const unitMiners = i18n[currentLang].unit_miners || "Miners";
             const unitBlocks = i18n[currentLang].unit_blocks || "Blocks";
             
-            document.getElementById('totalHashrate').innerHTML = `${data.totalHashrate || 0} <span class="unit">MH/s</span>`;
+            const net = formatHashrate(data.networkHashrateHps);
+            lastNetworkHashrateHps = Number(data.networkHashrateHps || 0);
+            document.getElementById('totalHashrate').innerHTML = `${net.value} <span class="unit">${net.unit}</span>`;
             document.getElementById('minerCount').innerHTML = `${data.minerCount || 0} <span class="unit">${unitMiners}</span>`;
-            document.getElementById('blockHeight').innerHTML = `${data.blockHeight || 0} <span class="unit">${unitBlocks}</span>`;
+            document.getElementById('blockHeight').innerHTML = `${data.chainHeight || 0} <span class="unit">${unitBlocks}</span>`;
             
             // 更新排行榜
             const tbody = document.getElementById('minersTable');
             tbody.innerHTML = '';
             (data.topMiners || []).forEach((miner, i) => {
+                const poolRate = formatHashrate(miner.hashrateHps);
                 const row = `
                     <tr>
                         <td>${i + 1}</td>
                         <td><span class="addr-tag">${miner.address}</span></td>
-                        <td class="hash-value">${miner.hashrate} MH/s</td>
+                        <td class="hash-value">${poolRate.value} ${poolRate.unit}</td>
                         <td>${miner.totalBlocks}</td>
                     </tr>
                 `;

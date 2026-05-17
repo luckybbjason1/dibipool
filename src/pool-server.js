@@ -223,18 +223,32 @@ let currentJob = {
     header: crypto.randomBytes(32).toString('hex'),
     height: 0,
     // 矿池份额难度 (比全网难度低，用于统计贡献)
-    shareTarget: "00000fffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+    shareTarget: "0000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
     difficulty: 1
 };
+
+let networkHashrateHps = null;
 
 /**
  * 验证份额 (Share) 是否合法
  */
+function computeShareHashHex(header, nonce) {
+    if (typeof header !== 'string') return null;
+    if (!/^[0-9a-fA-F]{64}$/.test(header)) return null;
+    const headerBuf = Buffer.from(header, 'hex');
+    const nonceBuf = Buffer.allocUnsafe(4);
+    nonceBuf.writeUInt32LE((nonce >>> 0), 0);
+    const input = Buffer.concat([headerBuf, nonceBuf]);
+    const h1 = crypto.createHash('sha256').update(input).digest();
+    return crypto.createHash('sha256').update(h1).digest('hex');
+}
+
 function verifyShare(header, nonce, target) {
-    const data = header + nonce.toString(16).padStart(8, '0');
-    const hash = crypto.createHash('sha256').update(data).digest('hex');
-    // 哈希值必须小于等于目标难度
-    return BigInt('0x' + hash) <= BigInt('0x' + target);
+    if (typeof target !== 'string') return false;
+    if (!/^[0-9a-fA-F]{64}$/.test(target)) return false;
+    const hashHex = computeShareHashHex(header, nonce);
+    if (!hashHex) return false;
+    return BigInt('0x' + hashHex) <= BigInt('0x' + target);
 }
 
 /**
@@ -242,6 +256,7 @@ function verifyShare(header, nonce, target) {
  */
 async function refreshJob() {
     const template = await rpc.call('getblocktemplate', [{ rules: ['segwit'] }]);
+    const netHash = await rpc.call('getnetworkhashps', []);
     
     if (template) {
         const newHeader = crypto.createHash('sha256').update(template.previousblockhash + template.curtime).digest('hex');
@@ -254,7 +269,7 @@ async function refreshJob() {
                 header: newHeader,
                 height: template.height,
                 target: template.target,
-                shareTarget: "00000fffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", // 矿池接受的最低难度
+                shareTarget: "0000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", // 矿池接受的最低难度
                 difficulty: 1,
                 template: template
             };
@@ -267,6 +282,12 @@ async function refreshJob() {
         }
     } else {
         // 降级处理...
+    }
+
+    if (typeof netHash === 'number' && Number.isFinite(netHash) && netHash > 0) {
+        networkHashrateHps = netHash;
+    } else if (netHash === null) {
+        networkHashrateHps = null;
     }
 }
 
@@ -329,7 +350,11 @@ io.on('connection', (socket) => {
             return socket.disconnect(true);
         }
         socket.join('stats_room');
-        socket.emit('stats_update', stats.getStats());
+        socket.emit('stats_update', {
+            ...stats.getStats(),
+            networkHashrateHps,
+            chainHeight: currentJob.height
+        });
     });
 
     // 2. 初始挖矿握手
@@ -392,8 +417,8 @@ io.on('connection', (socket) => {
 
         // 防作弊 3：服务端哈希验证 (Fake Share Verification)
         const shareTarget = socket.shareTarget || currentJob.shareTarget;
-        const isValid = verifyShare(header, nonceInt, shareTarget);
-        if (!isValid) {
+        const shareHashHex = computeShareHashHex(header, nonceInt);
+        if (!shareHashHex || BigInt('0x' + shareHashHex) > BigInt('0x' + shareTarget)) {
             console.warn(`[Anti-Cheat] 检测到非法份额提交! Miner: ${socket.minerAddress}`);
             return socket.emit('share_result', { success: false, message: 'Low Difficulty Share' });
         }
@@ -408,7 +433,7 @@ io.on('connection', (socket) => {
             }
 
             // 如果哈希值达到了全网难度 (Real Block Found!)
-            const isRealBlock = verifyShare(header, nonceInt, currentJob.target);
+            const isRealBlock = !!currentJob.target && BigInt('0x' + shareHashHex) <= BigInt('0x' + currentJob.target);
             
             if (isRealBlock) {
                 console.log(`[Pool] 🏆 矿工 ${socket.minerAddress} 找到了真实区块!`);
@@ -420,7 +445,7 @@ io.on('connection', (socket) => {
                 difficulty: socket.shareDifficulty || 1,
                 isBlock: isRealBlock,
                 height: currentJob.height,
-                hash: crypto.createHash('sha256').update(header + String(nonceInt)).digest('hex'),
+                hash: shareHashHex,
                 reward: config.pool.rewardPerBlock || 100,
                 minerAddress: socket.minerAddress
             });
@@ -497,14 +522,78 @@ setInterval(() => {
 
 // 每 3 秒广播一次全网统计
 setInterval(() => {
-    io.to('stats_room').emit('stats_update', stats.getStats());
+    io.to('stats_room').emit('stats_update', {
+        ...stats.getStats(),
+        networkHashrateHps,
+        chainHeight: currentJob.height
+    });
 }, 3000);
+
+const payoutConfig = config.payouts || (config.pool && config.pool.payouts) || {};
+const payoutsEnabled = String(process.env.DIBI8_PAYOUT_ENABLED || payoutConfig.enabled || '').toLowerCase() === 'true';
+const payoutIntervalMs = Math.max(5000, Number(process.env.DIBI8_PAYOUT_INTERVAL_MS || payoutConfig.intervalMs || 60000));
+const minPayout = Math.max(0, Number(process.env.DIBI8_MIN_PAYOUT || payoutConfig.minPayout || 0));
+const maxPayout = Math.max(0, Number(process.env.DIBI8_MAX_PAYOUT || payoutConfig.maxPayout || 0));
+const maxPayoutsPerRun = Math.max(1, Math.min(500, Number(process.env.DIBI8_MAX_PAYOUTS_PER_RUN || payoutConfig.maxPerRun || 50)));
+let payoutRunning = false;
+
+function roundAmount8(amount) {
+    const n = Number(amount || 0);
+    if (!Number.isFinite(n) || n <= 0) return 0;
+    return Number(n.toFixed(8));
+}
+
+async function processPayouts() {
+    if (!payoutsEnabled) return;
+    if (payoutRunning) return;
+    payoutRunning = true;
+    try {
+        const candidates = stats.listMinersForPayout({ minBalance: minPayout, maxCount: maxPayoutsPerRun });
+        for (const c of candidates) {
+            if (!c || !isValidDibiAddress(c.address)) continue;
+            const bal = Number(c.balance || 0);
+            if (!Number.isFinite(bal) || bal <= 0) continue;
+            let amt = bal;
+            if (maxPayout > 0) amt = Math.min(amt, maxPayout);
+            if (minPayout > 0 && amt < minPayout) continue;
+            const sendAmt = roundAmount8(amt);
+            if (sendAmt <= 0) continue;
+            const txid = await rpc.call('sendtoaddress', [c.address, sendAmt]);
+            if (typeof txid === 'string' && txid.trim()) {
+                stats.applyPayout({ address: c.address, amount: sendAmt, txid: txid.trim(), timestamp: Date.now() });
+            }
+        }
+    } finally {
+        payoutRunning = false;
+    }
+}
+
+setInterval(() => {
+    processPayouts().catch(() => {});
+}, payoutIntervalMs);
 
 // ==================== HTTP API (保留兼容) ====================
 
 app.use(express.static(path.join(__dirname, '../web')));
 
 app.get('/api/stats', (req, res) => res.json(stats.getStats()));
+app.get('/api/miner/:address', (req, res) => {
+    const address = String(req.params.address || '').trim();
+    const miner = stats.getMiner(address);
+    if (!miner) return res.status(404).json({ error: 'Miner Not Found' });
+    return res.json(miner);
+});
+app.get('/api/miner', (req, res) => {
+    const address = String(req.query.address || '').trim();
+    const miner = stats.getMiner(address);
+    if (!miner) return res.status(404).json({ error: 'Miner Not Found' });
+    return res.json(miner);
+});
+app.get('/api/payouts', (req, res) => {
+    const address = String(req.query.address || '').trim();
+    const limit = Number(req.query.limit || 20);
+    return res.json({ payouts: stats.getRecentPayouts({ address: address || undefined, limit }) });
+});
 
 app.get('/modern', (req, res) => res.sendFile(path.join(__dirname, '../web/modern_index.html')));
 app.get('/modern-miner', (req, res) => res.sendFile(path.join(__dirname, '../web/modern_miner.html')));

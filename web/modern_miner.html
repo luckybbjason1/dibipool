@@ -563,7 +563,7 @@
                 <div class="mining-visual">
                     <div class="mining-orb" id="miningOrb"></div>
                     <div class="mining-icon" id="miningIcon">⚙️</div>
-                    <div class="live-hashrate"><span id="hashrate">0.00</span> <span class="unit">H/min</span></div>
+                    <div class="live-hashrate"><span id="hashrate">0</span> <span class="unit">H/s</span></div>
                 </div>
 
                 <div class="status-grid">
@@ -573,7 +573,7 @@
                     </div>
                     <div class="status-item">
                         <div class="status-label" data-i18n="total_reward">Total Reward</div>
-                        <div class="status-val" id="earnings">0 DIBI</div>
+                        <div class="status-val" id="earnings">0</div>
                     </div>
                     <div class="status-item">
                         <div class="status-label" data-i18n="uptime">Uptime</div>
@@ -720,12 +720,29 @@
         createBgParticles();
         animateBg();
 
-        const socket = io();
+        const socket = io({
+            transports: ['websocket', 'polling'],
+            upgrade: true,
+            timeout: 20000,
+            reconnection: true,
+            reconnectionDelayMax: 5000
+        });
+        socket.on('connect', () => log(`${socket.id}`, 'success', 'ws_connected'));
+        socket.on('disconnect', (reason) => log(`${reason || ''}`, 'error', 'ws_disconnected'));
+        socket.on('connect_error', (err) => log(`${err && err.message ? err.message : err}`, 'error', 'ws_connect_error'));
         let mining = false;
         let startTime = null;
-        let minedBlocks = 0;
+        let acceptedShares = 0;
+        let blocksFound = 0;
         let runtimeInterval = null;
         let currentJob = null;
+        let authOk = false;
+        let minerWorker = null;
+        let submittedShares = 0;
+        let currentShareTarget = null;
+        let totalHashes = 0;
+        let lastHashReportAt = Date.now();
+        let lastHashCount = 0;
 
         // 图表初始化
         const ctx = document.getElementById('hashrateChart').getContext('2d');
@@ -734,7 +751,7 @@
             data: {
                 labels: [],
                 datasets: [{
-                    label: 'Hashrate (H/min)',
+                    label: 'Hashrate (H/s)',
                     data: [],
                     borderColor: '#ffd700',
                     backgroundColor: 'rgba(255, 215, 0, 0.1)',
@@ -782,8 +799,8 @@
                 worker_id: "Worker ID",
                 perf_icon: "⚡",
                 live_perf: "LIVE PERFORMANCE",
-                blocks_mined: "Blocks Mined",
-                total_reward: "Total Reward",
+                blocks_mined: "Accepted Shares",
+                total_reward: "Blocks Found",
                 uptime: "Uptime",
                 init_mining: "INITIALIZE MINING",
                 terminate: "TERMINATE",
@@ -794,9 +811,13 @@
                 err_bad_address: "ERROR: Invalid dibi1 address format.",
                 initializing: "INITIALIZING: Authenticating",
                 new_job: "NEW JOB: Received task header",
-                success_block: "SUCCESS: Block found and broadcasted!",
+                share_accepted: "SUCCESS: Share accepted.",
+                block_found: "SUCCESS: Block found!",
                 rejected: "REJECTED",
                 terminated: "TERMINATED: Connection closed by user.",
+                ws_connected: "CONNECTED: WebSocket online",
+                ws_disconnected: "DISCONNECTED: WebSocket offline",
+                ws_connect_error: "CONNECT ERROR: WebSocket failed",
                 notify: "Alerts",
                 power_limit: "Mining Power Limit",
                 power_current: "Current",
@@ -821,8 +842,8 @@
                 worker_id: "矿工 ID",
                 perf_icon: "⚡",
                 live_perf: "实时性能",
-                blocks_mined: "已挖区块",
-                total_reward: "总收益",
+                blocks_mined: "有效份额",
+                total_reward: "出块数",
                 uptime: "运行时间",
                 init_mining: "初始化挖矿",
                 terminate: "停止挖矿",
@@ -833,9 +854,13 @@
                 err_bad_address: "错误：dibi1 地址格式不正确。",
                 initializing: "初始化中：正在认证",
                 new_job: "新任务：已收到任务头",
-                success_block: "成功：区块已找到并广播！",
+                share_accepted: "成功：份额已接受。",
+                block_found: "成功：找到区块！",
                 rejected: "已拒绝",
                 terminated: "已终止：用户关闭了连接。",
+                ws_connected: "已连接：WebSocket 在线",
+                ws_disconnected: "已断开：WebSocket 离线",
+                ws_connect_error: "连接失败：WebSocket 无法建立",
                 notify: "通知",
                 power_limit: "网页挖矿强度上限",
                 power_current: "当前",
@@ -860,8 +885,8 @@
                 worker_id: "광부 ID",
                 perf_icon: "⚡",
                 live_perf: "실시간 성능",
-                blocks_mined: "채굴된 블록",
-                total_reward: "총 보상",
+                blocks_mined: "승인된 쉐어",
+                total_reward: "발견한 블록",
                 uptime: "가동 시간",
                 init_mining: "마이닝 초기화",
                 terminate: "마이닝 종료",
@@ -872,9 +897,13 @@
                 err_bad_address: "오류: dibi1 주소 형식이 올바르지 않습니다.",
                 initializing: "초기화 중: 인증 중",
                 new_job: "새 작업: 작업 헤더를 받았습니다",
-                success_block: "성공: 블록을 찾아서 브로드캐스트했습니다!",
+                share_accepted: "성공: 쉐어가 승인되었습니다.",
+                block_found: "성공: 블록을 찾았습니다!",
                 rejected: "거부됨",
                 terminated: "종료됨: 사용자에 의해 연결이 닫혔습니다.",
+                ws_connected: "연결됨: WebSocket 온라인",
+                ws_disconnected: "연결 끊김: WebSocket 오프라인",
+                ws_connect_error: "연결 오류: WebSocket 실패",
                 notify: "알림",
                 power_limit: "채굴 강도 제한",
                 power_current: "현재",
@@ -899,8 +928,8 @@
                 worker_id: "ID Thợ đào",
                 perf_icon: "⚡",
                 live_perf: "HIỆU SUẤT TRỰC TIẾP",
-                blocks_mined: "Khối đã đào",
-                total_reward: "Tổng phần thưởng",
+                blocks_mined: "Share hợp lệ",
+                total_reward: "Khối tìm được",
                 uptime: "Thời gian hoạt động",
                 init_mining: "KHỞI TẠO KHAI THÁC",
                 terminate: "CHẤM DỨT",
@@ -911,9 +940,13 @@
                 err_bad_address: "LỖI: Định dạng địa chỉ dibi1 không hợp lệ.",
                 initializing: "ĐANG KHỞI TẠO: Đang xác thực",
                 new_job: "NHIỆM VỤ MỚI: Đã nhận được tiêu đề tác vụ",
-                success_block: "THÀNH CÔNG: Đã tìm thấy khối và phát sóng!",
+                share_accepted: "THÀNH CÔNG: Share đã được chấp nhận.",
+                block_found: "THÀNH CÔNG: Đã tìm thấy khối!",
                 rejected: "BỊ TỪ CHỐI",
                 terminated: "ĐÃ CHẤM DỨT: Kết nối đã được đóng bởi người dùng.",
+                ws_connected: "ĐÃ KẾT NỐI: WebSocket online",
+                ws_disconnected: "NGẮT KẾT NỐI: WebSocket offline",
+                ws_connect_error: "LỖI KẾT NỐI: WebSocket thất bại",
                 notify: "Thông báo",
                 power_limit: "Giới hạn công suất đào",
                 power_current: "Hiện tại",
@@ -977,6 +1010,9 @@
             updateUI();
         }
 
+        const consentKey = 'dibi8_power_consent';
+        let pendingStart = false;
+
         function updateUI() {
             document.documentElement.lang = currentLang;
             document.querySelectorAll('[data-i18n]').forEach(el => {
@@ -999,9 +1035,6 @@
 
         // 初始化语言
         updateUI();
-
-        const consentKey = 'dibi8_power_consent';
-        let pendingStart = false;
 
         function isValidDibiAddressClient(address) {
             if (typeof address !== 'string') return false;
@@ -1108,6 +1141,9 @@
             }
             storageSet('dibi8_power', slider.value);
             syncPowerUI();
+            if (mining && minerWorker) {
+                minerWorker.postMessage({ type: 'setThrottle', throttle: v });
+            }
         });
 
         const savedPower = parseInt(storageGet('dibi8_power') || '50', 10);
@@ -1136,20 +1172,236 @@
             const mins = Math.floor(elapsed / 60).toString().padStart(2, '0');
             const secs = (elapsed % 60).toString().padStart(2, '0');
             document.getElementById('runtime').textContent = `${mins}:${secs}`;
-            const elapsedMins = elapsed / 60;
-            const hashrate = elapsedMins > 0 ? (minedBlocks / elapsedMins).toFixed(2) : "0.00";
-            document.getElementById('hashrate').textContent = hashrate;
-            updateChart(parseFloat(hashrate));
+
+            const now = Date.now();
+            const deltaHashes = totalHashes - lastHashCount;
+            const dtMs = now - lastHashReportAt;
+            const hps = dtMs > 0 ? (deltaHashes / (dtMs / 1000)) : 0;
+            lastHashReportAt = now;
+            lastHashCount = totalHashes;
+            document.getElementById('hashrate').textContent = Number.isFinite(hps) ? Math.round(hps).toLocaleString() : '0';
+            updateChart(Number.isFinite(hps) ? hps : 0);
+        }
+
+        function createMinerWorker() {
+            const code = `
+                let running = false;
+                let headerBytes = null;
+                let targetBytes = null;
+                let buffer = null;
+                let nonce = 0;
+                let throttle = 50;
+                let totalHashes = 0;
+                let pending = false;
+
+                const K = new Uint32Array([
+                    0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,
+                    0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,
+                    0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,
+                    0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,
+                    0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,
+                    0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,
+                    0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,
+                    0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2
+                ]);
+
+                function rotr(x, n) { return (x >>> n) | (x << (32 - n)); }
+                function ch(x, y, z) { return (x & y) ^ (~x & z); }
+                function maj(x, y, z) { return (x & y) ^ (x & z) ^ (y & z); }
+                function s0(x) { return rotr(x, 7) ^ rotr(x, 18) ^ (x >>> 3); }
+                function s1(x) { return rotr(x, 17) ^ rotr(x, 19) ^ (x >>> 10); }
+                function S0(x) { return rotr(x, 2) ^ rotr(x, 13) ^ rotr(x, 22); }
+                function S1(x) { return rotr(x, 6) ^ rotr(x, 11) ^ rotr(x, 25); }
+
+                function sha256(bytes) {
+                    const l = bytes.length;
+                    const bitLenHi = Math.floor((l * 8) / 0x100000000);
+                    const bitLenLo = (l * 8) >>> 0;
+                    const padLen = (((l + 9 + 63) >> 6) << 6) - l;
+                    const m = new Uint8Array(l + padLen);
+                    m.set(bytes);
+                    m[l] = 0x80;
+                    const dv = new DataView(m.buffer);
+                    dv.setUint32(m.length - 8, bitLenHi);
+                    dv.setUint32(m.length - 4, bitLenLo);
+
+                    let a = 0x6a09e667, b = 0xbb67ae85, c = 0x3c6ef372, d = 0xa54ff53a;
+                    let e = 0x510e527f, f = 0x9b05688c, g = 0x1f83d9ab, h = 0x5be0cd19;
+                    const w = new Uint32Array(64);
+
+                    for (let i = 0; i < m.length; i += 64) {
+                        for (let t = 0; t < 16; t++) w[t] = dv.getUint32(i + (t * 4));
+                        for (let t = 16; t < 64; t++) w[t] = (s1(w[t - 2]) + w[t - 7] + s0(w[t - 15]) + w[t - 16]) >>> 0;
+                        let A = a, B = b, C = c, D = d, E = e, F = f, G = g, H = h;
+                        for (let t = 0; t < 64; t++) {
+                            const T1 = (H + S1(E) + ch(E, F, G) + K[t] + w[t]) >>> 0;
+                            const T2 = (S0(A) + maj(A, B, C)) >>> 0;
+                            H = G; G = F; F = E; E = (D + T1) >>> 0;
+                            D = C; C = B; B = A; A = (T1 + T2) >>> 0;
+                        }
+                        a = (a + A) >>> 0; b = (b + B) >>> 0; c = (c + C) >>> 0; d = (d + D) >>> 0;
+                        e = (e + E) >>> 0; f = (f + F) >>> 0; g = (g + G) >>> 0; h = (h + H) >>> 0;
+                    }
+                    const out = new Uint8Array(32);
+                    const outDv = new DataView(out.buffer);
+                    outDv.setUint32(0, a); outDv.setUint32(4, b); outDv.setUint32(8, c); outDv.setUint32(12, d);
+                    outDv.setUint32(16, e); outDv.setUint32(20, f); outDv.setUint32(24, g); outDv.setUint32(28, h);
+                    return out;
+                }
+
+                function sha256d(bytes) {
+                    return sha256(sha256(bytes));
+                }
+
+                function hexToBytes(hex) {
+                    if (typeof hex !== 'string' || (hex.length % 2) !== 0) return null;
+                    const out = new Uint8Array(hex.length / 2);
+                    for (let i = 0; i < out.length; i++) out[i] = parseInt(hex.substr(i * 2, 2), 16);
+                    return out;
+                }
+
+                function le32(n) {
+                    const b = new Uint8Array(4);
+                    b[0] = n & 0xff;
+                    b[1] = (n >>> 8) & 0xff;
+                    b[2] = (n >>> 16) & 0xff;
+                    b[3] = (n >>> 24) & 0xff;
+                    return b;
+                }
+
+                function isHashLeqTarget(hash, target) {
+                    for (let i = 0; i < 32; i++) {
+                        const a = hash[i] | 0;
+                        const b = target[i] | 0;
+                        if (a < b) return true;
+                        if (a > b) return false;
+                    }
+                    return true;
+                }
+
+                function setJob(headerHex, targetHex) {
+                    const hb = hexToBytes(headerHex);
+                    const tb = hexToBytes(targetHex);
+                    if (!hb || hb.length !== 32 || !tb || tb.length !== 32) return false;
+                    headerBytes = hb;
+                    targetBytes = tb;
+                    buffer = new Uint8Array(36);
+                    buffer.set(headerBytes, 0);
+                    return true;
+                }
+
+                function reseedNonce() {
+                    const u = new Uint32Array(1);
+                    crypto.getRandomValues(u);
+                    nonce = u[0] >>> 0;
+                }
+
+                function tick() {
+                    if (pending) return;
+                    pending = true;
+                    setTimeout(() => {
+                        pending = false;
+                        if (!running || !buffer || !targetBytes) return;
+                        const cycleMs = 100;
+                        const duty = Math.max(0, Math.min(1, Number(throttle || 0) / 100));
+                        let workMs = cycleMs * duty;
+                        if (duty > 0 && workMs < 2) workMs = 2;
+                        const start = performance.now();
+                        const end = duty >= 1 ? (start + cycleMs) : (start + workMs);
+                        let hashed = 0;
+                        while (running && performance.now() < end) {
+                            const nb = le32(nonce);
+                            buffer[32] = nb[0]; buffer[33] = nb[1]; buffer[34] = nb[2]; buffer[35] = nb[3];
+                            const h = sha256d(buffer);
+                            hashed += 1;
+                            if (isHashLeqTarget(h, targetBytes)) {
+                                postMessage({ type: 'share', nonce });
+                            }
+                            nonce = (nonce + 1) >>> 0;
+                        }
+                        totalHashes += hashed;
+                        postMessage({ type: 'progress', totalHashes, hashed });
+                        const sleepMs = duty >= 1 ? 0 : Math.max(0, cycleMs - workMs);
+                        setTimeout(tick, sleepMs);
+                    }, 0);
+                }
+
+                onmessage = (ev) => {
+                    const msg = ev && ev.data ? ev.data : {};
+                    if (msg.type === 'start') {
+                        throttle = Number(msg.throttle || throttle);
+                        if (setJob(msg.headerHex, msg.targetHex)) {
+                            totalHashes = 0;
+                            reseedNonce();
+                            running = true;
+                            tick();
+                        }
+                    } else if (msg.type === 'stop') {
+                        running = false;
+                    } else if (msg.type === 'update') {
+                        if (setJob(msg.headerHex, msg.targetHex)) {
+                            reseedNonce();
+                        }
+                    } else if (msg.type === 'setThrottle') {
+                        throttle = Number(msg.throttle || throttle);
+                    }
+                };
+            `;
+            const blob = new Blob([code], { type: 'application/javascript' });
+            const url = URL.createObjectURL(blob);
+            const w = new Worker(url);
+            URL.revokeObjectURL(url);
+            return w;
+        }
+
+        function ensureWorker() {
+            if (minerWorker) return;
+            minerWorker = createMinerWorker();
+            minerWorker.onmessage = (ev) => {
+                const msg = ev && ev.data ? ev.data : {};
+                if (msg.type === 'progress') {
+                    if (typeof msg.totalHashes === 'number') totalHashes = msg.totalHashes;
+                } else if (msg.type === 'share') {
+                    if (!mining || !authOk || !currentJob) return;
+                    const n = typeof msg.nonce === 'number' ? msg.nonce : parseInt(String(msg.nonce || ''), 10);
+                    if (!Number.isInteger(n) || n < 0 || n > 0xffffffff) return;
+                    submittedShares += 1;
+                    socket.emit('submit_share', { nonce: n, header: currentJob.header });
+                }
+            };
+            minerWorker.onerror = () => {
+                log('Worker Error', 'error');
+                stopMining();
+            };
+        }
+
+        function maybeStartWorker() {
+            if (!mining || !authOk || !currentJob) return;
+            ensureWorker();
+            currentShareTarget = currentJob.shareTarget || null;
+            const power = parseInt(document.getElementById('powerSlider').value || '50', 10);
+            minerWorker.postMessage({ type: 'start', headerHex: currentJob.header, targetHex: currentJob.shareTarget, throttle: power });
         }
 
         // 监听来自服务器的任务推送
         socket.on('mining_job', (job) => {
             currentJob = job;
             log(`${job.header.substring(0, 12)}...`, 'info', 'new_job');
+            if (mining && authOk && minerWorker) {
+                const power = parseInt(document.getElementById('powerSlider').value || '50', 10);
+                minerWorker.postMessage({ type: 'setThrottle', throttle: power });
+                minerWorker.postMessage({ type: 'update', headerHex: job.header, targetHex: job.shareTarget });
+            } else {
+                maybeStartWorker();
+            }
         });
 
         socket.on('auth_result', (data) => {
-            if (data && data.success) return;
+            if (data && data.success) {
+                authOk = true;
+                maybeStartWorker();
+                return;
+            }
             log(`${data && data.message ? data.message : ''}`, 'error', 'rejected');
             stopMining();
         });
@@ -1157,10 +1409,11 @@
         // 监听提交结果反馈
         socket.on('share_result', (data) => {
             if (data.success) {
-                minedBlocks++;
-                document.getElementById('minedBlocks').textContent = minedBlocks;
-                document.getElementById('earnings').textContent = (minedBlocks * 100) + ' DIBI';
-                log('', 'success', 'success_block');
+                acceptedShares += 1;
+                if (data.isBlock) blocksFound += 1;
+                document.getElementById('minedBlocks').textContent = acceptedShares;
+                document.getElementById('earnings').textContent = String(blocksFound);
+                log('', 'success', data.isBlock ? 'block_found' : 'share_accepted');
             } else {
                 log(`${data.message || data.error}`, 'error', 'rejected');
             }
@@ -1189,7 +1442,13 @@
 
             mining = true;
             startTime = Date.now();
-            minedBlocks = 0;
+            acceptedShares = 0;
+            blocksFound = 0;
+            submittedShares = 0;
+            totalHashes = 0;
+            lastHashReportAt = Date.now();
+            lastHashCount = 0;
+            authOk = false;
             
             document.getElementById('btnStart').disabled = true;
             document.getElementById('btnStop').disabled = false;
@@ -1205,25 +1464,9 @@
             });
 
             runtimeInterval = setInterval(updateRuntime, 1000);
-
-            // 模拟挖矿循环 (WebSocket 模式下只需不断提交 nonce)
-            while (mining) {
-                if (currentJob) {
-                    const p = parseInt(document.getElementById('powerSlider').value || '60', 10);
-                    const fakeNonce = Math.floor(Math.random() * 1000000);
-                    // 模拟找到有效哈希的概率 (WebSocket 提交)
-                    const submitChance = Math.min(0.95, Math.max(0.05, (p / 100) * 0.35));
-                    if (Math.random() < submitChance) { 
-                        socket.emit('submit_share', { 
-                            nonce: fakeNonce, 
-                            header: currentJob.header 
-                        });
-                    }
-                }
-                const p2 = parseInt(document.getElementById('powerSlider').value || '60', 10);
-                const delay = Math.max(120, Math.round(1200 - (p2 * 10.5)));
-                await new Promise(r => setTimeout(r, delay));
-            }
+            document.getElementById('minedBlocks').textContent = '0';
+            document.getElementById('earnings').textContent = '0';
+            maybeStartWorker();
         }
 
         function stopMining() {
@@ -1233,6 +1476,12 @@
             document.getElementById('miningIcon').classList.remove('active');
             document.getElementById('miningOrb').classList.remove('active');
             if (runtimeInterval) { clearInterval(runtimeInterval); runtimeInterval = null; }
+            authOk = false;
+            if (minerWorker) {
+                try { minerWorker.postMessage({ type: 'stop' }); } catch (e) {}
+                try { minerWorker.terminate(); } catch (e) {}
+                minerWorker = null;
+            }
             log('', 'info', 'terminated');
         }
     </script>

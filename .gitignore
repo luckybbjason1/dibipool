@@ -1,3 +1,4 @@
 TRAE/
+node_modules/
 config/pool.local.json
 .env
