@@ -1047,7 +1047,10 @@
             const net = formatHashrate(data.networkHashrateHps);
             lastNetworkHashrateHps = Number(data.networkHashrateHps || 0);
             document.getElementById('totalHashrate').innerHTML = `${net.value} <span class="unit">${net.unit}</span>`;
-            document.getElementById('minerCount').innerHTML = `${data.minerCount || 0} <span class="unit">${unitMiners}</span>`;
+            const minersOnline = Number(data.minerOnlineCount || 0);
+            const minersByShares = Number(data.minerCount || 0);
+            const shownMiners = Math.max(minersOnline, minersByShares);
+            document.getElementById('minerCount').innerHTML = `${shownMiners || 0} <span class="unit">${unitMiners}</span>`;
             document.getElementById('blockHeight').innerHTML = `${data.chainHeight || 0} <span class="unit">${unitBlocks}</span>`;
             
             // 更新排行榜

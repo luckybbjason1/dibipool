@@ -122,6 +122,15 @@ const ipBans = new Map();
 const ipRates = new Map();
 const ipConnections = new Map();
 const ipAccepted = new Map();
+const onlineMiners = new Map();
+
+function getOnlineMinerCounts() {
+    const unique = new Set();
+    for (const v of onlineMiners.values()) {
+        if (v && v.address) unique.add(v.address);
+    }
+    return { sessions: onlineMiners.size, miners: unique.size };
+}
 
 function isValidDibiAddress(address) {
     if (typeof address !== 'string') return false;
@@ -363,10 +372,13 @@ io.on('connection', (socket) => {
             return socket.disconnect(true);
         }
         socket.join('stats_room');
+        const online = getOnlineMinerCounts();
         socket.emit('stats_update', {
             ...stats.getStats(),
             networkHashrateHps,
-            chainHeight: currentJob.height
+            chainHeight: currentJob.height,
+            minerOnlineCount: online.miners,
+            minerSessionCount: online.sessions
         });
     });
 
@@ -383,6 +395,7 @@ io.on('connection', (socket) => {
         }
         socket.minerAddress = address || 'anonymous';
         socket.workerId = worker || 'ws_worker';
+        onlineMiners.set(socket.id, { address: socket.minerAddress, workerId: socket.workerId, authedAt: Date.now() });
         socket.shareDifficulty = clampDifficulty(socket.shareDifficulty || 1);
         socket.shareTarget = getShareTargetForDifficulty(currentJob.shareTarget, socket.shareDifficulty);
         socket.vardiff = {
@@ -513,6 +526,7 @@ io.on('connection', (socket) => {
 
     socket.on('disconnect', () => {
         console.log(`[WS] 矿工断开: ${socket.id}`);
+        onlineMiners.delete(socket.id);
         const current = ipConnections.get(ip) || 0;
         if (current <= 1) ipConnections.delete(ip);
         else ipConnections.set(ip, current - 1);
@@ -534,10 +548,13 @@ setInterval(() => {
 
 // 每 3 秒广播一次全网统计
 setInterval(() => {
+    const online = getOnlineMinerCounts();
     io.to('stats_room').emit('stats_update', {
         ...stats.getStats(),
         networkHashrateHps,
-        chainHeight: currentJob.height
+        chainHeight: currentJob.height,
+        minerOnlineCount: online.miners,
+        minerSessionCount: online.sessions
     });
 }, 3000);
 
@@ -591,7 +608,8 @@ app.use(express.static(path.join(__dirname, '../web')));
 app.get('/api/stats', (req, res) => res.json({
     ...stats.getStats(),
     networkHashrateHps,
-    chainHeight: currentJob.height
+    chainHeight: currentJob.height,
+    ...getOnlineMinerCounts()
 }));
 app.get('/api/health', (req, res) => res.json({
     ok: true,
